@@ -46,40 +46,49 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* ── Light-first enterprise theme inspired by AtomAI ── */
+/* ── Light-first enterprise theme — AtomAI exact match ── */
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.995 0 0);
-  --foreground: oklch(0.145 0.005 260);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.18 0.01 240);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0.005 260);
+  --card-foreground: oklch(0.18 0.01 240);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0.005 260);
-  --primary: oklch(0.55 0.2 260);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.965 0.002 260);
-  --secondary-foreground: oklch(0.205 0.01 260);
-  --muted: oklch(0.965 0.002 260);
-  --muted-foreground: oklch(0.50 0.01 260);
-  --accent: oklch(0.965 0.002 260);
-  --accent-foreground: oklch(0.205 0.01 260);
+  --popover-foreground: oklch(0.18 0.01 240);
+  /* Teal primary (matches AtomAI teal accent) */
+  --primary: oklch(0.65 0.17 178);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.97 0.003 240);
+  --secondary-foreground: oklch(0.25 0.01 240);
+  --muted: oklch(0.97 0.003 240);
+  --muted-foreground: oklch(0.52 0.01 240);
+  --accent: oklch(0.97 0.003 240);
+  --accent-foreground: oklch(0.25 0.01 240);
   --destructive: oklch(0.58 0.22 25);
-  --border: oklch(0.92 0.004 260);
-  --input: oklch(0.92 0.004 260);
-  --ring: oklch(0.55 0.2 260);
-  --chart-1: oklch(0.55 0.2 260);
+  --border: oklch(0.91 0.004 240);
+  --input: oklch(0.91 0.004 240);
+  --ring: oklch(0.65 0.17 178);
+  --chart-1: oklch(0.65 0.17 178);
   --chart-2: oklch(0.60 0.18 160);
   --chart-3: oklch(0.65 0.18 80);
-  --chart-4: oklch(0.60 0.20 300);
+  --chart-4: oklch(0.55 0.22 300);
   --chart-5: oklch(0.58 0.22 25);
   --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0.005 260);
-  --sidebar-primary: oklch(0.55 0.2 260);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.96 0.004 260);
-  --sidebar-accent-foreground: oklch(0.145 0.005 260);
-  --sidebar-border: oklch(0.92 0.004 260);
-  --sidebar-ring: oklch(0.55 0.2 260);
+  --sidebar-foreground: oklch(0.18 0.01 240);
+  --sidebar-primary: oklch(0.65 0.17 178);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.97 0.003 240);
+  --sidebar-accent-foreground: oklch(0.18 0.01 240);
+  --sidebar-border: oklch(0.91 0.004 240);
+  --sidebar-ring: oklch(0.65 0.17 178);
+
+  /* ─ Custom tokens for landing page ─ */
+  --teal: oklch(0.68 0.16 178);
+  --violet: oklch(0.52 0.23 293);
+  --impact-bg: oklch(0.96 0.04 178);
+  --impact-text: oklch(0.55 0.16 178);
+  --footer-bg: oklch(0.19 0.025 240);
+  --footer-fg: oklch(0.62 0.01 240);
 }
 
 /* Scrollbar */
@@ -98,12 +107,36 @@
   animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Gradient text utility */
+/* Gradient text — teal → violet, matching AtomAI exact palette */
 .text-gradient {
-  background: linear-gradient(135deg, oklch(0.50 0.22 260), oklch(0.45 0.24 280));
+  background: linear-gradient(90deg, #00C9A7 0%, #7C3AED 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Impact stat card background */
+.bg-impact {
+  background-color: oklch(0.96 0.04 178);
+}
+
+/* Footer dark navy */
+.bg-footer {
+  background-color: oklch(0.19 0.025 240);
+}
+
+/* CTA section gradient */
+.bg-cta-gradient {
+  background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+}
+
+/* Section label — small teal label above headings */
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #00C9A7;
 }
 
 /* Smooth section fade-in */

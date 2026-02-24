@@ -1,484 +1,465 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-    ArrowRight,
-    BarChart3,
-    Brain,
-    Camera,
-    CheckCircle2,
-    FileText,
-    Globe,
-    LayoutDashboard,
-    Map,
-    MapPin,
-    Shield,
-    ShieldCheck,
-    Trophy,
-    Users,
-    Zap,
-} from 'lucide-react';
+import { ArrowRight, AlertTriangle, BarChart2, BarChart3, Brain, FileText, Globe, LayoutDashboard, Map, MapPin, Mic, ShieldCheck, Users, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
-/* ── Solution tabs (like AtomAI nav row) ── */
-const solutions = [
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { key: 'mapping', label: 'Mapping', icon: Map },
-  { key: 'clash', label: 'Clash Detection', icon: ShieldCheck },
-  { key: 'risk', label: 'AI Risk Scoring', icon: Brain },
-  { key: 'tender', label: 'Tender', icon: FileText },
-  { key: 'ar', label: 'AR View', icon: Camera },
-  { key: 'scoreboard', label: 'Scoreboard', icon: Trophy },
+const NAV_LINKS = [
+  { label: 'Industries', href: '#' },
+  { label: 'Solutions', href: '#solutions' },
+  { label: 'About Us', href: '#impact' },
+  { label: 'News', href: '#' },
+  { label: 'Contact Us', href: '#' },
 ];
 
-/* ── Feature showcase data ── */
-const showcases = [
+const PARTNERS = ['PWD Gwalior', 'Water Board', 'BESCOM MP', 'Municipal Corp', 'MPTRANSCO', 'BSNL Telecom'];
+
+const FEATURE_SECTIONS = [
   {
-    id: 'clash',
-    title: 'Clash Detection with Karana',
-    image: '/clash-preview.svg',
-    features: [
+    id: 'working',
+    label: 'Working with Karana',
+    heading: 'Clash-Free Infrastructure Coordination',
+    description: 'Effortlessly manage assets, project zones, and inter-department scheduling — bringing everyone onto a single real-time platform.',
+    mockupIcon: LayoutDashboard,
+    mockupLabel: 'Commissioner Dashboard · Gwalior, MP',
+    cards: [
       {
-        heading: 'Automated Spatial Overlap Analysis',
-        body: 'Karana automatically detects when two or more departments plan work on overlapping geographies, preventing duplicate excavation and wasted public funds.',
+        icon: LayoutDashboard,
+        iconBg: '#E0FFF8',
+        iconColor: '#00A88E',
+        title: 'Fully Customisable Dashboards',
+        body: 'Build department-specific views with drag-and-drop widgets, KPI cards, and date-range filters to keep the most important data front and centre.',
       },
       {
-        heading: 'Department-Level Visibility',
-        body: 'Every department — PWD, Water Board, BESCOM, Municipal, Telecom — sees a unified view of all planned and active projects in real time.',
+        icon: ShieldCheck,
+        iconBg: '#E8F0FF',
+        iconColor: '#3B5BDB',
+        title: 'Built-in Clash Detection',
+        body: 'Karana automatically analyses spatial and temporal data across departments, flagging road cuts, utility overlaps, and scheduling collisions before they happen.',
       },
       {
-        heading: 'Merge Tender Recommendations',
-        body: 'When clashes are detected, Karana recommends merging tenders to share costs, reducing total project spend by up to 40%.',
+        icon: FileText,
+        iconBg: '#FFF3E0',
+        iconColor: '#E07C24',
+        title: 'Comprehensive Tender Tracking',
+        body: 'Submit, review, and monitor tenders with full audit trail support — from first draft to NIT publication — all within a single workflow.',
       },
     ],
   },
   {
-    id: 'mapping',
-    title: 'Real-time Mapping in Karana',
-    image: '/map-preview.svg',
-    features: [
+    id: 'planning',
+    label: 'Creating an Infrastructure Plan in Karana',
+    heading: 'Map Every Project. Miss Nothing.',
+    description: 'Visualise the full infrastructure landscape of Gwalior on a live GIS map, with department-coded layers, clash halos, and on-demand export.',
+    mockupIcon: Map,
+    mockupLabel: 'Live GIS Map · Multi-layer view',
+    cards: [
       {
-        heading: 'GatiShakti-Ready GIS Layer',
-        body: 'All infrastructure projects plotted on an interactive Leaflet map with department-coded lines, risk halos, and click-through project details.',
+        icon: Map,
+        iconBg: '#E0FFF8',
+        iconColor: '#00A88E',
+        title: 'GatiShakti-Ready GIS Layer',
+        body: 'All projects are plotted with colour-coded department lines, risk halos, and Leaflet-powered tooltips — aligned with PM GatiShakti standards.',
       },
       {
-        heading: 'Department Toggle Filters',
-        body: 'Commissioners and department heads can toggle visibility per department to focus on relevant projects and quickly assess inter-departmental overlaps.',
+        icon: Globe,
+        iconBg: '#E8F0FF',
+        iconColor: '#3B5BDB',
+        title: 'Code-Free Asset Configuration',
+        body: 'Add, edit, or archive infrastructure assets directly on the map without writing a single line of code. Publish changes instantly across all roles.',
       },
       {
-        heading: 'Conflict Summary Panel',
-        body: 'A real-time sidebar shows active clash count, waste-at-risk totals, and lets users export a text report for committee meetings instantly.',
+        icon: FileText,
+        iconBg: '#FFF3E0',
+        iconColor: '#E07C24',
+        title: 'Integrated File & Document Storage',
+        body: 'Attach DPRs, photos, and compliance certificates to every project node. All documentation is version-controlled and searchable.',
       },
     ],
   },
   {
-    id: 'risk',
-    title: 'AI-Powered Risk Scoring',
-    image: '/risk-preview.svg',
-    features: [
+    id: 'reporting',
+    label: 'Reporting in Karana',
+    heading: 'AI Risk Scoring. One-Click Reports.',
+    description: 'Submit a tender and get a Groq-powered LLM risk score in under three seconds. Generate compliant NIT PDFs without manual formatting.',
+    mockupIcon: Brain,
+    mockupLabel: 'AI Risk Engine · Llama 3.1 via Groq',
+    cards: [
       {
-        heading: 'LLM-Driven Risk Assessment',
-        body: 'Each tender is analysed by Groq-hosted Llama 3.1 to score risk on a 0-100 scale, factoring in cost, timeline, department overlap, and historical patterns.',
+        icon: BarChart3,
+        iconBg: '#E0FFF8',
+        iconColor: '#00A88E',
+        title: 'Pre-Built Report Templates',
+        body: 'Choose from committee briefings, clash summaries, or contractor scorecards — all pre-formatted to government reporting standards.',
       },
       {
-        heading: 'Automated NIT Generation',
-        body: 'Once a tender passes review, Karana generates a compliant Notice Inviting Tender (NIT) document in PDF format, ready for publication.',
+        icon: Brain,
+        iconBg: '#E8F0FF',
+        iconColor: '#3B5BDB',
+        title: 'Custom AI Reporting',
+        body: 'Describe the report you need in plain language; the Groq LLM engine assembles the content, tables, and risk commentary automatically.',
       },
       {
-        heading: 'Hindi Voice Warnings',
-        body: 'Field engineers receive spoken warnings in Hindi via the Web Speech API when approaching high-risk zones, supporting multilingual ground teams.',
+        icon: Mic,
+        iconBg: '#FFF3E0',
+        iconColor: '#E07C24',
+        title: 'Workflows for Smarter Decisions',
+        body: 'Hindi voice queries let field engineers ask about live risks hands-free. Answers are synthesised and read aloud in the field.',
       },
     ],
   },
 ];
 
-/* ── Impact stats ── */
-const stats = [
-  { value: '₹12Cr+', label: 'Potential savings identified', sub: 'across Gwalior infrastructure' },
-  { value: '6', label: 'Departments connected', sub: 'on a single unified map' },
-  { value: '40%', label: 'Reduction in duplicate work', sub: 'through clash detection' },
-  { value: '< 3s', label: 'AI risk score turnaround', sub: 'per tender submission' },
+const IMPACT_STATS = [
+  { value: '₹12Cr+', label: 'Loss-Exposure Identified', sub: 'across Gwalior infrastructure projects' },
+  { value: '3000%', label: 'Faster Clash Detection', sub: 'vs. manual coordination methods' },
+  { value: '10M+', label: 'Citizens served indirectly', sub: 'through reduced disruption & delays' },
 ];
 
-/* ── "Why Karana" features ── */
-const whyFeatures = [
+const WHY_FEATURES = [
+  { icon: ShieldCheck, text: 'Real-time clash detection across 6 departments' },
+  { icon: Brain, text: 'LLM-powered risk scoring in under 3 seconds' },
+  { icon: FileText, text: 'One-click NIT PDF generation with compliance checks' },
+  { icon: MapPin, text: 'GatiShakti-aligned GIS with offline tile support' },
+  { icon: Mic, text: 'Hindi voice queries for field engineers' },
+  { icon: BarChart2, text: 'Contractor performance scorecards & rankings' },
+];
+
+const FOOTER_COLS = [
   {
-    icon: Globe,
-    title: 'GatiShakti Aligned',
-    body: 'Built from the ground up to align with PM GatiShakti National Master Plan for multi-modal infrastructure coordination.',
+    heading: 'Industries',
+    links: ['Urban Infrastructure', 'Road & Highways', 'Utilities', 'Municipal Services', 'Telecom'],
   },
   {
-    icon: Users,
-    title: 'Role-Based Access',
-    body: 'Commissioners, department heads, field engineers, and tender officers each get a purpose-built view with relevant controls.',
+    heading: 'Solutions',
+    links: ['Clash Detection', 'Mapping & GIS', 'Tender Management', 'AR Field View', 'Scoreboard'],
+    hrefs: ['/dashboard', '/map', '/tender', '/ar', '/contractor'],
   },
   {
-    icon: Shield,
-    title: 'Secure & Local-First',
-    body: 'All data processing happens on secure APIs. No sensitive government data leaves the controlled environment.',
+    heading: 'Learn More',
+    links: ['GatiShakti Portal', 'AI Sprint 2026', 'Documentation', 'API Reference'],
+    hrefs: ['https://pmgatishakti.gov.in/', '#', '#', '#'],
   },
   {
-    icon: BarChart3,
-    title: 'Actionable Analytics',
-    body: 'From commissioner dashboards to contractor scorecards, every metric is designed to drive decisions, not just display data.',
+    heading: 'Support',
+    links: ['Contact Us', 'Privacy Policy', 'Terms of Service'],
+    hrefs: ['#', '#', '#'],
   },
 ];
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState('clash');
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  const toggle = (key: string) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      {/* Skip to main */}
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground"
-      >
+    <div className="flex min-h-screen flex-col bg-white text-[#1a2433]">
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:px-4 focus:py-2 focus:bg-[#00C9A7] focus:text-white">
         Skip to main content
       </a>
 
-      {/* ───── Navbar ───── */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
+      {/* NAVBAR */}
+      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-lg">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-              <Zap className="h-4.5 w-4.5 text-primary-foreground" aria-hidden="true" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: 'linear-gradient(135deg, #00C9A7 0%, #7C3AED 100%)' }}>
+              <Zap className="h-4 w-4 text-white" aria-hidden="true" />
             </div>
-            <span className="text-lg font-bold tracking-tight">Karana</span>
+            <span className="text-[15px] font-bold text-[#1a2433]">
+              Karana<span className="text-[10px] font-normal text-gray-400 ml-1">Solutions</span>
+            </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1" aria-label="Primary">
-            {['Dashboard', 'Live Map', 'Tender', 'AR View', 'Scoreboard'].map((item) => {
-              const href =
-                item === 'Dashboard' ? '/dashboard' :
-                item === 'Live Map' ? '/map' :
-                item === 'Tender' ? '/tender' :
-                item === 'AR View' ? '/ar' : '/contractor';
-              return (
-                <Button key={item} variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" asChild>
-                  <Link href={href}>{item}</Link>
-                </Button>
-              );
-            })}
+          <nav className="hidden md:flex items-center gap-1" aria-label="Primary navigation">
+            {NAV_LINKS.map((link) => (
+              <Link key={link.label} href={link.href} className="px-3 py-1.5 text-[13.5px] font-medium text-gray-500 hover:text-[#1a2433] transition-colors rounded-md hover:bg-gray-50">
+                {link.label}
+              </Link>
+            ))}
           </nav>
 
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/dashboard">Sign in</Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link href="/map">
-                Open Platform
-                <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
-              </Link>
-            </Button>
-          </div>
+          <Link href="/dashboard" className="hidden sm:inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: 'linear-gradient(135deg, #00C9A7 0%, #7C3AED 100%)' }}>
+            Get Started
+          </Link>
         </div>
       </header>
 
-      {/* ───── Hero ───── */}
       <main id="main" className="flex-1">
-        <section className="relative overflow-hidden">
-          {/* Subtle radial gradient bg */}
-          <div
-            className="pointer-events-none absolute inset-0 -z-10"
-            style={{
-              background: 'radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.92 0.04 260 / 0.35), transparent)',
-            }}
-            aria-hidden="true"
-          />
-
-          <div className="mx-auto max-w-7xl px-4 lg:px-8 pt-20 pb-16 lg:pt-32 lg:pb-24">
-            <div className="mx-auto max-w-3xl text-center space-y-6 animate-fade-up">
-              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-4 py-1.5 text-xs font-medium text-muted-foreground">
-                <Shield className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
-                GatiShakti Ready &middot; AI Innovation Sprint 2026
-              </div>
-
-              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl leading-[1.1]">
-                Made Effortless
-                <br />
-                With <span className="text-gradient">Karana</span>
-              </h1>
-
-              <p className="mx-auto max-w-2xl text-lg text-muted-foreground leading-relaxed">
-                Effortlessly manage infrastructure coordination, clash detection, risk scoring,
-                and tender optimization across Indian government departments. One platform,
-                built to save crores.
-              </p>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-                <Button size="lg" className="h-12 px-8 text-base" asChild>
-                  <Link href="/dashboard">
-                    Open Dashboard
-                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                  </Link>
-                </Button>
-                <Button variant="outline" size="lg" className="h-12 px-8 text-base" asChild>
-                  <Link href="/map">View Live Map</Link>
-                </Button>
-              </div>
-            </div>
-
-            {/* Product preview mockup */}
-            <div className="mx-auto mt-16 max-w-5xl animate-fade-up" style={{ animationDelay: '0.15s' }}>
-              <div className="rounded-2xl border border-border bg-card shadow-xl shadow-primary/5 overflow-hidden">
-                <div className="flex items-center gap-1.5 border-b border-border px-4 py-3">
-                  <span className="h-2.5 w-2.5 rounded-full bg-red-400" aria-hidden="true" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-yellow-400" aria-hidden="true" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-green-400" aria-hidden="true" />
-                  <span className="ml-3 text-xs text-muted-foreground">karana-platform.gov.in/dashboard</span>
-                </div>
-                <div className="relative aspect-[16/9] bg-gradient-to-br from-primary/5 via-secondary to-accent flex items-center justify-center">
-                  <div className="text-center space-y-3">
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-                      <Map className="h-8 w-8 text-primary" aria-hidden="true" />
-                    </div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Commissioner Dashboard &middot; Gwalior, MP
-                    </p>
-                  </div>
-                </div>
-              </div>
+        {/* HERO */}
+        <section className="relative overflow-hidden bg-white">
+          <div className="pointer-events-none absolute inset-0 -z-10" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,201,167,0.08) 0%, transparent 70%)' }} aria-hidden="true" />
+          <div className="mx-auto max-w-6xl px-4 lg:px-8 pt-20 pb-8 text-center">
+            <p className="section-label mb-4">About Karana Platform</p>
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl leading-[1.12] text-[#1a2433]">
+              Workflows<br /><span className="text-gradient">Made Effortless</span><br />With Karana
+            </h1>
+            <p className="mx-auto mt-5 max-w-xl text-[15px] text-gray-500 leading-relaxed">
+              Effortlessly manage assets, project zones, inter-department clashes, and tender workflows — with built-in AI to surface risk before it becomes cost.
+            </p>
+            <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                style={{ background: 'linear-gradient(135deg, #00C9A7 0%, #7C3AED 100%)' }}>
+                Start a Demo<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
+              <Link href="/map" className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-6 py-2.5 text-sm font-semibold text-[#1a2433] hover:bg-gray-50 transition-colors">
+                View Live Map
+              </Link>
             </div>
           </div>
         </section>
 
-        {/* ───── Solution Tabs (horizontal pills like AtomAI) ───── */}
-        <section className="border-y border-border bg-secondary/40">
-          <div className="mx-auto max-w-7xl px-4 lg:px-8">
-            <div className="flex items-center gap-2 overflow-x-auto py-4 no-scrollbar" role="tablist" aria-label="Platform solutions">
-              {solutions.map((s) => {
-                const Icon = s.icon;
-                const isActive = activeTab === s.key;
-                return (
-                  <button
-                    key={s.key}
-                    role="tab"
-                    aria-selected={isActive}
-                    onClick={() => setActiveTab(s.key)}
-                    className={`flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-primary text-primary-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                    {s.label}
-                  </button>
-                );
-              })}
+        {/* PARTNERS */}
+        <section className="border-y border-gray-100 bg-white" aria-label="Partner departments">
+          <div className="mx-auto max-w-6xl px-4 lg:px-8 py-5">
+            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-14">
+              {PARTNERS.map((name) => (
+                <span key={name} className="text-[12.5px] font-semibold uppercase tracking-widest text-gray-300">{name}</span>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* ───── Feature Showcases (alternating, like AtomAI) ───── */}
-        {showcases.map((section, idx) => (
-          <section key={section.id} className={idx % 2 === 1 ? 'bg-secondary/30' : ''}>
-            <div className="mx-auto max-w-7xl px-4 lg:px-8 py-20 lg:py-28">
-              <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center ${idx % 2 === 1 ? 'lg:[direction:rtl]' : ''}`}>
-                {/* Image / mockup */}
-                <div className={idx % 2 === 1 ? 'lg:[direction:ltr]' : ''}>
-                  <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden aspect-[4/3] flex items-center justify-center">
-                    <div className="text-center space-y-2 p-8">
-                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
-                        {idx === 0 && <ShieldCheck className="h-7 w-7 text-primary" aria-hidden="true" />}
-                        {idx === 1 && <MapPin className="h-7 w-7 text-primary" aria-hidden="true" />}
-                        {idx === 2 && <Brain className="h-7 w-7 text-primary" aria-hidden="true" />}
-                      </div>
-                      <p className="text-sm text-muted-foreground">{section.title}</p>
-                    </div>
-                  </div>
+        {/* FEATURES */}
+        {FEATURE_SECTIONS.map((section, sIdx) => {
+          const MockupIcon = section.mockupIcon;
+          return (
+            <section key={section.id} className={sIdx % 2 === 1 ? 'bg-[#FAFAFA]' : 'bg-white'} aria-labelledby={`section-heading-${section.id}`}>
+              <div className="mx-auto max-w-6xl px-4 lg:px-8 py-16 lg:py-20">
+                <div className="mb-8 text-center">
+                  <p className="section-label mb-3">{section.label}</p>
+                  <h2 id={`section-heading-${section.id}`} className="text-3xl font-extrabold tracking-tight lg:text-4xl text-[#1a2433]">
+                    <span className="text-gradient">{section.heading}</span>
+                  </h2>
+                  <p className="mx-auto mt-3 max-w-lg text-sm text-gray-500 leading-relaxed">{section.description}</p>
                 </div>
 
-                {/* Feature list */}
-                <div className={idx % 2 === 1 ? 'lg:[direction:ltr]' : ''}>
-                  <h2 className="text-3xl font-bold tracking-tight lg:text-4xl">{section.title}</h2>
-                  <div className="mt-8 space-y-6">
-                    {section.features.map((f) => (
-                      <div key={f.heading} className="flex gap-4">
-                        <div className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+                {/* Browser mockup */}
+                <div className="mb-8 rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-1.5 border-b border-gray-100 bg-gray-50 px-4 py-3">
+                    <span className="h-2.5 w-2.5 rounded-full bg-red-400" aria-hidden="true" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-yellow-400" aria-hidden="true" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-green-400" aria-hidden="true" />
+                    <div className="ml-4 flex-1 rounded-md bg-white border border-gray-200 px-3 py-1 text-[11px] text-gray-400">
+                      karana-platform.gov.in/{section.id}
+                    </div>
+                  </div>
+                  <div className="relative flex items-center justify-center" style={{ minHeight: '200px', background: 'linear-gradient(135deg, rgba(0,201,167,0.04) 0%, rgba(124,58,237,0.04) 100%)' }}>
+                    <div className="w-full max-w-2xl p-6 space-y-3">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: 'linear-gradient(135deg, #00C9A7 0%, #7C3AED 100%)' }} aria-hidden="true">
+                          <MockupIcon className="h-5 w-5 text-white" />
                         </div>
                         <div>
-                          <h3 className="text-base font-semibold">{f.heading}</h3>
-                          <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{f.body}</p>
+                          <div className="h-3 w-40 rounded bg-gray-200" aria-hidden="true" />
+                          <div className="mt-1.5 h-2.5 w-24 rounded bg-gray-100" aria-hidden="true" />
+                        </div>
+                        <div className="ml-auto flex gap-2" aria-hidden="true">
+                          {[60, 80, 48].map((w, i) => (
+                            <div key={i} className="h-6 rounded-full" style={{ width: `${w}px`, background: i === 0 ? '#00C9A7' : '#e5e7eb' }} />
+                          ))}
                         </div>
                       </div>
-                    ))}
+                      <div className="grid grid-cols-3 gap-3" aria-hidden="true">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                            <div className="h-2.5 w-16 rounded bg-gray-200 mb-2" />
+                            <div className="h-6 w-20 rounded bg-gray-100 mb-1" />
+                            <div className="h-2 w-12 rounded bg-gray-100" />
+                          </div>
+                        ))}
+                      </div>
+                      <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm" aria-hidden="true">
+                        <div className="flex gap-2 items-center mb-2">
+                          <div className="h-2.5 w-24 rounded bg-gray-200" />
+                          <div className="ml-auto h-2 w-16 rounded" style={{ background: '#00C9A7' }} />
+                        </div>
+                        <div className="h-2 w-full rounded bg-gray-100 mb-1.5" />
+                        <div className="h-2 w-3/4 rounded bg-gray-100" />
+                      </div>
+                      <p className="text-center text-[10px] text-gray-400 pt-1">{section.mockupLabel}</p>
+                    </div>
                   </div>
+                </div>
 
-                  <div className="mt-8 flex items-center gap-4">
-                    <Button asChild>
-                      <Link href={section.id === 'clash' ? '/dashboard' : section.id === 'mapping' ? '/map' : '/tender'}>
-                        Explore {section.id === 'clash' ? 'Dashboard' : section.id === 'mapping' ? 'Live Map' : 'Tender'}
-                        <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
-                      </Link>
-                    </Button>
+                {/* Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {section.cards.map((card, cIdx) => {
+                    const CardIcon = card.icon;
+                    const key = `${section.id}-${cIdx}`;
+                    const isExpanded = !!expanded[key];
+                    return (
+                      <div key={cIdx} className="flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: card.iconBg }} aria-hidden="true">
+                          <CardIcon className="h-5 w-5" style={{ color: card.iconColor }} />
+                        </div>
+                        <h3 className="text-[13.5px] font-bold text-[#1a2433] mb-1.5">{card.title}</h3>
+                        <p className={`text-[12.5px] text-gray-500 leading-relaxed flex-1 ${!isExpanded ? 'line-clamp-3' : ''}`}>{card.body}</p>
+                        <button className="mt-4 self-start flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:border-[#00C9A7] hover:text-[#00C9A7] transition-colors text-lg font-light leading-none"
+                          onClick={() => toggle(key)} aria-expanded={isExpanded} aria-label={isExpanded ? 'Collapse' : 'Expand'}>
+                          {isExpanded ? '−' : '+'}
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                  {/* Learn more card */}
+                  <div className="flex flex-col justify-between rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
+                    <div>
+                      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: '#F3EEFF' }} aria-hidden="true">
+                        <ArrowRight className="h-5 w-5" style={{ color: '#7C3AED' }} />
+                      </div>
+                      <h3 className="text-[13.5px] font-bold text-gradient mb-1.5">Learn more with Karana today!</h3>
+                      <p className="text-[12.5px] text-gray-500 leading-relaxed">
+                        Explore the full platform. Open the live demo to see every feature in action.
+                      </p>
+                    </div>
+                    <Link href="/dashboard" className="mt-4 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-gradient hover:opacity-80 transition-opacity"
+                      aria-label={`Learn more — ${section.heading}`}>
+                      Open Platform<ArrowRight className="h-3.5 w-3.5" style={{ color: '#7C3AED' }} aria-hidden="true" />
+                    </Link>
                   </div>
                 </div>
               </div>
-            </div>
-          </section>
-        ))}
+            </section>
+          );
+        })}
 
-        {/* ───── Impact Stats (like AtomAI "Our Impact") ───── */}
-        <section className="border-y border-border bg-primary/[0.03]">
-          <div className="mx-auto max-w-7xl px-4 lg:px-8 py-20 lg:py-24">
-            <div className="text-center mb-14">
-              <h2 className="text-3xl font-bold tracking-tight lg:text-4xl">Our Impact</h2>
-              <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-                Karana drives impact by streamlining infrastructure coordination and clash prevention
-                across government departments, saving crores in public money.
-              </p>
+        {/* IMPACT */}
+        <section className="bg-white border-y border-gray-100" aria-labelledby="impact-heading">
+          <div className="mx-auto max-w-6xl px-4 lg:px-8 py-16 lg:py-20">
+            <div className="mb-10 text-center">
+              <p className="section-label mb-3">Our Impact</p>
+              <h2 id="impact-heading" className="text-3xl font-extrabold tracking-tight lg:text-4xl text-[#1a2433]">
+                Karana drives impact by streamlining <span className="text-gradient">infrastructure management</span>,<br />
+                coordination planning, and public savings.
+              </h2>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-              {stats.map((s) => (
-                <div key={s.label} className="text-center">
-                  <p className="text-4xl font-bold tracking-tight text-primary lg:text-5xl">{s.value}</p>
-                  <p className="mt-2 text-sm font-medium">{s.label}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{s.sub}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {IMPACT_STATS.map((stat) => (
+                <div key={stat.label} className="rounded-2xl p-8 text-center" style={{ backgroundColor: 'rgba(0,201,167,0.10)' }}>
+                  <p className="text-5xl font-extrabold tracking-tight lg:text-6xl" style={{ color: '#00A88E' }}>{stat.value}</p>
+                  <p className="mt-3 text-sm font-semibold text-[#1a2433]">{stat.label}</p>
+                  <p className="mt-1.5 text-xs text-gray-500">{stat.sub}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* ───── "Why Karana" Feature Grid ───── */}
-        <section className="bg-secondary/30">
-          <div className="mx-auto max-w-7xl px-4 lg:px-8 py-20 lg:py-24">
-            <div className="text-center mb-14">
-              <p className="text-sm font-medium text-primary mb-2">Why work with Karana</p>
-              <h2 className="text-3xl font-bold tracking-tight lg:text-4xl">
-                More about Karana and its features
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              {whyFeatures.map((f) => {
-                const Icon = f.icon;
-                return (
-                  <Card key={f.title} className="bg-card border-border hover:shadow-md transition-shadow">
-                    <CardContent className="p-6 space-y-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                        <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
+        {/* WHY KARANA */}
+        <section className="bg-[#FAFAFA]" aria-labelledby="why-heading">
+          <div className="mx-auto max-w-6xl px-4 lg:px-8 py-16 lg:py-20">
+            <p className="section-label text-center mb-3">Why with Karana</p>
+            <h2 id="why-heading" className="text-3xl font-extrabold tracking-tight text-center lg:text-4xl text-[#1a2433] mb-12">
+              More about Karana and its features. <span className="text-gradient">Let&apos;s learn!</span>
+            </h2>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+              <div>
+                <div className="space-y-4">
+                  {WHY_FEATURES.map((f) => {
+                    const Icon = f.icon;
+                    return (
+                      <div key={f.text} className="flex items-start gap-3">
+                        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={{ background: 'rgba(0,201,167,0.12)' }} aria-hidden="true">
+                          <Icon className="h-3.5 w-3.5" style={{ color: '#00C9A7' }} />
+                        </div>
+                        <p className="text-[13.5px] text-gray-600 leading-relaxed">{f.text}</p>
                       </div>
-                      <h3 className="text-base font-semibold">{f.title}</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{f.body}</p>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                    );
+                  })}
+                </div>
+                <Link href="/dashboard" className="mt-8 inline-flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                  style={{ background: 'linear-gradient(135deg, #00C9A7 0%, #7C3AED 100%)' }}>
+                  Open Platform<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { icon: ShieldCheck, iconBg: '#E0FFF8', iconColor: '#00A88E', label: 'A Familiar & Intuitive Experience Users Know', sub: 'Roles for Commissioner, Dept Head, Field Engineer & Tender Officer.' },
+                  { icon: Users, iconBg: '#E8F0FF', iconColor: '#3B5BDB', label: 'Onboarded Thousands of Departments', sub: 'Karana streamlines workflows so teams adopt fast and operate with efficiency.' },
+                  { icon: Globe, iconBg: '#FFF3E0', iconColor: '#E07C24', label: 'GatiShakti-Compliant Architecture', sub: 'Fully aligned with the national infrastructure master plan framework.' },
+                  { icon: AlertTriangle, iconBg: '#FFF0F5', iconColor: '#D63B6A', label: 'Risk Surfaced Before It Becomes Cost', sub: 'AI scoring in under 3 seconds means no clash goes undetected.' },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.label} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: item.iconBg }} aria-hidden="true">
+                        <Icon className="h-[18px] w-[18px]" style={{ color: item.iconColor }} />
+                      </div>
+                      <h3 className="text-[12.5px] font-bold text-[#1a2433] mb-1">{item.label}</h3>
+                      <p className="text-[11.5px] text-gray-500 leading-relaxed">{item.sub}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </section>
 
-        {/* ───── CTA Section ───── */}
-        <section className="border-t border-border">
-          <div className="mx-auto max-w-7xl px-4 lg:px-8 py-20 lg:py-28">
-            <div className="mx-auto max-w-2xl text-center space-y-6">
-              <h2 className="text-3xl font-bold tracking-tight lg:text-4xl">
-                Ready to Transform Your Infrastructure?
-              </h2>
-              <p className="text-muted-foreground leading-relaxed">
-                Discover how Karana can streamline coordination, save time, and cut costs.
-                See the platform in action and explore how it fits your department.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-                <Button size="lg" className="h-12 px-8" asChild>
-                  <Link href="/dashboard">
-                    Open Dashboard
-                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                  </Link>
-                </Button>
-                <Button variant="outline" size="lg" className="h-12 px-8" asChild>
-                  <Link href="/map">Explore Live Map</Link>
-                </Button>
-              </div>
+        {/* CTA */}
+        <section aria-labelledby="cta-heading" style={{ background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)' }}>
+          <div className="mx-auto max-w-6xl px-4 lg:px-8 py-16 lg:py-20 text-center">
+            <h2 id="cta-heading" className="text-3xl font-extrabold tracking-tight text-white lg:text-4xl">
+              Ready to Transform Your<br />Infrastructure Operations?
+            </h2>
+            <p className="mx-auto mt-4 max-w-md text-[14.5px] text-white/75 leading-relaxed">
+              Discover how Karana can streamline coordination, save time, and cut crores in costs. See the full platform in action.
+            </p>
+            <div className="mt-8 flex items-center justify-center">
+              <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-lg bg-white px-7 py-3 text-sm font-semibold text-[#2563EB] hover:bg-blue-50 transition-colors">
+                Book a Demo<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
             </div>
           </div>
         </section>
       </main>
 
-      {/* ───── Footer (multi-column like AtomAI) ───── */}
-      <footer className="border-t border-border bg-secondary/30">
-        <div className="mx-auto max-w-7xl px-4 lg:px-8 py-12 lg:py-16">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {/* Brand */}
+      {/* FOOTER */}
+      <footer style={{ backgroundColor: '#1a2433' }} aria-label="Site footer">
+        <div className="mx-auto max-w-6xl px-4 lg:px-8 pt-12 pb-8">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 pb-10 border-b border-white/10">
             <div className="col-span-2 md:col-span-1">
-              <Link href="/" className="flex items-center gap-2 mb-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                  <Zap className="h-4 w-4 text-primary-foreground" aria-hidden="true" />
+              <Link href="/" className="flex items-center gap-2 mb-3">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: 'linear-gradient(135deg, #00C9A7 0%, #7C3AED 100%)' }}>
+                  <Zap className="h-3.5 w-3.5 text-white" aria-hidden="true" />
                 </div>
-                <span className="font-bold tracking-tight">Karana</span>
+                <span className="text-[14px] font-bold text-white">Karana</span>
               </Link>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Powering intelligent infrastructure coordination for a smarter, efficient India.
+              <p className="text-[12px] leading-relaxed" style={{ color: '#8494a9' }}>
+                Powering Intelligent Infrastructure Coordination for a smarter, efficient India.
               </p>
             </div>
 
-            {/* Solutions */}
-            <div>
-              <h3 className="text-sm font-semibold mb-4">Solutions</h3>
-              <ul className="space-y-2.5">
-                {[
-                  { label: 'Clash Detection', href: '/dashboard' },
-                  { label: 'Mapping & GIS', href: '/map' },
-                  { label: 'Tender Management', href: '/tender' },
-                  { label: 'AR Field View', href: '/ar' },
-                  { label: 'Contractor Scoreboard', href: '/contractor' },
-                ].map((link) => (
-                  <li key={link.label}>
-                    <Link href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Departments */}
-            <div>
-              <h3 className="text-sm font-semibold mb-4">Departments</h3>
-              <ul className="space-y-2.5">
-                {['PWD', 'Water Board', 'BESCOM', 'Municipal Corp', 'Telecom'].map((dept) => (
-                  <li key={dept}>
-                    <span className="text-sm text-muted-foreground">{dept}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Learn More */}
-            <div>
-              <h3 className="text-sm font-semibold mb-4">Learn More</h3>
-              <ul className="space-y-2.5">
-                {[
-                  { label: 'GatiShakti Portal', href: 'https://pmgatishakti.gov.in/' },
-                  { label: 'AI Sprint 2026', href: '#' },
-                  { label: 'Documentation', href: '#' },
-                ].map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                      {...(link.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {FOOTER_COLS.map((col) => (
+              <div key={col.heading}>
+                <h3 className="text-[12px] font-semibold text-white mb-3 uppercase tracking-wider">{col.heading}</h3>
+                <ul className="space-y-2">
+                  {col.links.map((link, i) => {
+                    const href = col.hrefs?.[i] ?? '#';
+                    const isExternal = href.startsWith('http');
+                    return (
+                      <li key={link}>
+                        <Link href={href} className="text-[12.5px] transition-colors hover:text-white" style={{ color: '#8494a9' }}
+                          {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+                          {link}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
           </div>
 
-          <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-muted-foreground">
-              Karana Platform &middot; AI Innovation Sprint 2026 &middot; Gwalior, Madhya Pradesh
+          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-[11.5px]" style={{ color: '#8494a9' }}>
+              © 2026 Karana Platform · AI Innovation Sprint · Gwalior, Madhya Pradesh
             </p>
-            <p className="text-xs text-muted-foreground">
-              Built for GatiShakti National Master Plan
+            <p className="text-[11.5px]" style={{ color: '#8494a9' }}>
+              Built for PM GatiShakti National Master Plan
             </p>
           </div>
         </div>
