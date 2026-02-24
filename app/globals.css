@@ -4,6 +4,24 @@
 @import "shadcn/tailwind.css";
 @import "leaflet-draw/dist/leaflet.draw.css";
 
+/* Hide native leaflet-draw toolbar — we use our own MapToolbar */
+.leaflet-draw-toolbar,
+.leaflet-draw-actions {
+  display: none !important;
+}
+
+/* Custom tooltip for Karana map features */
+.karana-tooltip {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

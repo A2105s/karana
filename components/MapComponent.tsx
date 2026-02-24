@@ -1,657 +1,1086 @@
 ﻿'use client';
 
-import mockProjectsData from '@/data/mockProjects.json';
+/**
+ * KARANA PLATFORM — Live Map Component
+ *
+ * Light-theme map page matching the app's professional UI.
+ * - White/light backgrounds, shadcn-style borders
+ * - Lucide icons (no emojis)
+ * - Hamburger toggle to show/hide side panels
+ * - No mock data loaded on start — map starts clean
+ */
+
 import L from 'leaflet';
+import 'leaflet-draw';
 import 'leaflet/dist/leaflet.css';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
-    Circle,
-    GeoJSON,
-    LayerGroup,
-    MapContainer,
-    TileLayer,
-    useMap,
+  FeatureGroup,
+  MapContainer,
+  TileLayer,
+  useMap
 } from 'react-leaflet';
+
+import FolderTree, {
+  type ProjectFolder,
+  createFolderId,
+} from './FolderTree';
 import SaveProjectModal, { type ProjectForm } from './SaveProjectModal';
 
-// â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+import {
+  buildPopupHtml,
+  createClusterIcon,
+  createWorkIcon,
+} from '@/lib/mapIcons';
+import {
+  MOCK_FOLDERS,
+  MOCK_KML_FILES,
+  extractKmlGeometry,
+} from '@/lib/mockKmlData';
+import {
+  type PriorityProject,
+  type RankedProject,
+  getGeometryCenter,
+  getSequenceOrder,
+  rankProjects,
+} from '@/lib/priorityEngine';
+import {
+  WORK_TYPE_IDS,
+  getWorkType,
+} from '@/lib/workTypes';
 
-const DEPT_COLORS: Record<string, string> = {
-  PWD: '#EF4444',
-  WATER: '#3B82F6',
-  BESCOM: '#F59E0B',
-  MUNICIPAL: '#8B5CF6',
-  TELECOM: '#10B981',
+import {
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  Database,
+  FolderTree as FolderTreeIcon,
+  Layers,
+  MapPin,
+  Menu,
+  Minus,
+  MousePointer,
+  Plus,
+  Route,
+  Satellite,
+  Trash2,
+  Upload,
+  X,
+} from 'lucide-react';
+
+/* ================================================================== */
+/*  Constants                                                          */
+/* ================================================================== */
+
+const GWALIOR: [number, number] = [26.2298, 78.1734];
+
+/**
+ * Haversine distance (meters) between two [lat, lng] points.
+ */
+function haversineMeters(
+  a: [number, number],
+  b: [number, number],
+): number {
+  const R = 6_371_000;
+  const dLat = ((b[0] - a[0]) * Math.PI) / 180;
+  const dLon = ((b[1] - a[1]) * Math.PI) / 180;
+  const sinLat = Math.sin(dLat / 2);
+  const sinLon = Math.sin(dLon / 2);
+  const h =
+    sinLat * sinLat +
+    Math.cos((a[0] * Math.PI) / 180) *
+      Math.cos((b[0] * Math.PI) / 180) *
+      sinLon * sinLon;
+  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+/**
+ * Spatial proximity clash check.
+ * Returns true only if two geometries are within CLASH_RADIUS_METERS of each
+ * other — measured as closest-point distance between their coordinate arrays.
+ */
+const CLASH_RADIUS_METERS = 100;
+
+function geometriesClash(
+  gA: { type: string; coordinates: number[][] | number[] },
+  gB: { type: string; coordinates: number[][] | number[] },
+): boolean {
+  const toLatLngPairs = (
+    g: { type: string; coordinates: number[][] | number[] },
+  ): [number, number][] => {
+    if (g.type === 'Point') {
+      const c = g.coordinates as number[];
+      return [[c[1], c[0]]];
+    }
+    if (g.type === 'Polygon') {
+      const rings = g.coordinates as unknown as number[][][];
+      return (rings[0] ?? []).map((c) => [c[1], c[0]] as [number, number]);
+    }
+    // LineString or fallback
+    return (g.coordinates as number[][]).map(
+      (c) => [c[1], c[0]] as [number, number],
+    );
+  };
+
+  const ptsA = toLatLngPairs(gA);
+  const ptsB = toLatLngPairs(gB);
+  if (ptsA.length === 0 || ptsB.length === 0) return false;
+
+  for (const a of ptsA) {
+    for (const b of ptsB) {
+      if (haversineMeters(a, b) <= CLASH_RADIUS_METERS) return true;
+    }
+  }
+  return false;
+}
+
+/** Dash pattern per layer depth */
+const LAYER_DASH: Record<string, string | undefined> = {
+  underground: '8 4',
+  surface: '4 2',
+  road: undefined,
 };
 
-type TileType = 'street' | 'satellite' | 'hybrid';
-
-const TILE_CONFIG: Record<
-  TileType,
-  { url: string; attribution: string; maxZoom: number; label: string; icon: string }
-> = {
+const TILE_LAYERS = {
   street: {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19,
-    label: 'Street',
-    icon: 'ðŸ—ºï¸',
+    attr: '&copy; OpenStreetMap contributors',
   },
   satellite: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: '&copy; Esri, Maxar, Earthstar Geographics',
-    maxZoom: 19,
-    label: 'Satellite',
-    icon: 'ðŸ›°ï¸',
-  },
-  hybrid: {
-    url: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
-    attribution: '&copy; Google Maps',
-    maxZoom: 20,
-    label: 'Hybrid',
-    icon: 'ðŸŒ',
+    attr: '&copy; Esri',
   },
 };
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-interface GeoJsonFeature {
-  type: 'Feature';
-  properties: {
-    id: number;
-    dept: string;
-    title: string;
-    start: string;
-    end: string;
-    cost: number;
-    risk: string;
-    clash_with: string | null;
-    description?: string;
-  };
-  geometry: {
-    type: string;
-    coordinates: number[][] | number[];
-  };
-}
+/* ================================================================== */
+/*  Toast System                                                       */
+/* ================================================================== */
 
 interface Toast {
   id: number;
-  type: 'success' | 'error' | 'warning';
   message: string;
+  type: 'success' | 'info' | 'warning' | 'error';
 }
 
-// â”€â”€â”€ Draw Control (inner component â€” needs useMap) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function ToastContainer({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id: number) => void }) {
+  const borderColor = (t: Toast['type']) => {
+    switch (t) {
+      case 'success': return 'border-green-500';
+      case 'info':    return 'border-blue-500';
+      case 'warning': return 'border-amber-500';
+      case 'error':   return 'border-red-500';
+    }
+  };
+  const iconColor = (t: Toast['type']) => {
+    switch (t) {
+      case 'success': return 'text-green-600';
+      case 'info':    return 'text-blue-600';
+      case 'warning': return 'text-amber-600';
+      case 'error':   return 'text-red-600';
+    }
+  };
 
-interface DrawControlProps {
-  onDrawCreated: (geojson: GeoJSON.Feature) => void;
-}
-
-function DrawControl({ onDrawCreated }: DrawControlProps) {
-  const map = useMap();
-  const drawnItemsRef = useRef<L.FeatureGroup | null>(null);
-  const controlRef = useRef<any>(null);
-
-  useEffect(() => {
-    // Fix Leaflet default icon
-    delete (L.Icon.Default.prototype as any)._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl:
-        'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-      iconUrl:
-        'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-      shadowUrl:
-        'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-    });
-
-    // Dynamically load leaflet-draw only on client
-    import('leaflet-draw').then(() => {
-      const drawnItems = new L.FeatureGroup();
-      map.addLayer(drawnItems);
-      drawnItemsRef.current = drawnItems;
-
-      const drawControl = new (L as any).Control.Draw({
-        position: 'topleft',
-        draw: {
-          polyline: {
-            shapeOptions: { color: '#1E3A8A', weight: 5 },
-            metric: true,
-          },
-          polygon: false,
-          circle: false,
-          marker: true,
-          rectangle: false,
-          circlemarker: false,
-        },
-        edit: {
-          featureGroup: drawnItems,
-          remove: true,
-        },
-      });
-
-      map.addControl(drawControl);
-      controlRef.current = drawControl;
-
-      const handleCreated = (e: any) => {
-        const layer = e.layer;
-        drawnItems.addLayer(layer);
-        onDrawCreated(layer.toGeoJSON() as GeoJSON.Feature);
-      };
-
-      map.on((L as any).Draw.Event.CREATED, handleCreated);
-
-      return () => {
-        map.off((L as any).Draw.Event.CREATED, handleCreated);
-        if (controlRef.current) map.removeControl(controlRef.current);
-        if (drawnItemsRef.current) map.removeLayer(drawnItemsRef.current);
-      };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map]);
-
-  return null;
-}
-
-// â”€â”€â”€ KML Control (inner component â€” needs useMap) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-interface KMLControlProps {
-  onImport: (count: number, filename: string) => void;
-  onError: (msg: string) => void;
-}
-
-function KMLControl({ onImport, onError }: KMLControlProps) {
-  const map = useMap();
-  const fileRef = useRef<HTMLInputElement | null>(null);
-
-  const handleKMLImport = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const kmlText = event.target?.result as string;
-        try {
-          const omnivore = await import('leaflet-omnivore').then((m) => m.default ?? m) as any;
-          const kmlLayer: L.GeoJSON = omnivore.kml.parse(kmlText);
-
-          let featureCount = 0;
-          kmlLayer.eachLayer((layer: any) => {
-            featureCount++;
-            if (layer.setStyle) {
-              layer.setStyle({ color: '#F59E0B', weight: 4, dashArray: '8, 4', opacity: 0.9 });
-            }
-            const props = layer.feature?.properties;
-            const name = props?.name || 'KML Feature';
-            // Strip HTML tags from description to prevent XSS
-            const desc = props?.description
-              ? String(props.description).replace(/<[^>]*>/g, '').slice(0, 120)
-              : 'Google Earth imported layer';
-            layer.bindPopup(
-              `<div class="text-sm font-sans p-1">
-                <b>ðŸ“‚ ${name}</b><br/>
-                <span class="text-gray-600 text-xs">${desc}</span><br/>
-                <span class="text-amber-600 font-semibold text-xs">âš ï¸ Run clash check to validate</span>
-              </div>`
-            );
-          });
-
-          kmlLayer.addTo(map);
-
-          try {
-            const bounds = (kmlLayer as any).getBounds?.();
-            if (bounds && bounds.isValid()) map.fitBounds(bounds, { maxZoom: 15 });
-          } catch { /* bounds may be invalid for empty KML */ }
-
-          onImport(featureCount, file.name);
-        } catch (err) {
-          console.error('KML parse error:', err);
-          onError('Failed to parse KML file. Ensure it is a valid .kml (not .kmz).');
-        }
-      };
-
-      reader.onerror = () => onError('Could not read the file. Please try again.');
-      reader.readAsText(file);
-      if (fileRef.current) fileRef.current.value = '';
-    },
-    [map, onImport, onError]
-  );
+  if (toasts.length === 0) return null;
 
   return (
-    <div className="absolute bottom-6 left-4 z-[1000]">
-      <label
-        htmlFor="kml-upload"
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => e.key === 'Enter' && fileRef.current?.click()}
-        className="cursor-pointer bg-slate-900/80 backdrop-blur-xl border border-white/20 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/20 transition-all flex items-center gap-2 shadow-lg select-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-        aria-label="Import KML file from Google Earth"
-      >
-        ðŸ“‚ Import KML
-        <input
-          ref={fileRef}
-          id="kml-upload"
-          type="file"
-          accept=".kml"
-          className="hidden"
-          onChange={handleKMLImport}
-          aria-label="KML file input"
-        />
-      </label>
-    </div>
-  );
-}
-
-// â”€â”€â”€ Toast Notification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-function ToastContainer({ toasts }: { toasts: Toast[] }) {
-  if (!toasts.length) return null;
-  return (
-    <div
-      aria-live="polite"
-      aria-atomic="false"
-      className="absolute top-20 left-1/2 -translate-x-1/2 z-[9998] flex flex-col gap-2 pointer-events-none"
-    >
+    <div className="fixed bottom-4 right-4 z-[10000] flex flex-col gap-2 max-w-sm" role="status" aria-live="polite">
       {toasts.map((t) => (
         <div
           key={t.id}
-          role="status"
-          className={`px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-xl backdrop-blur-xl border pointer-events-auto
-            ${t.type === 'success' ? 'bg-green-700/90 border-green-400/50' : ''}
-            ${t.type === 'error' ? 'bg-red-700/90 border-red-400/50' : ''}
-            ${t.type === 'warning' ? 'bg-amber-700/90 border-amber-400/50' : ''}
-          `}
+          className={`bg-background border ${borderColor(t.type)} border-l-4 rounded-lg shadow-lg px-4 py-3 flex items-start gap-3`}
         >
-          {t.message}
+          <AlertTriangle className={`h-4 w-4 mt-0.5 flex-shrink-0 ${iconColor(t.type)}`} aria-hidden="true" />
+          <p className="text-sm text-foreground flex-1">{t.message}</p>
+          <button
+            onClick={() => onDismiss(t.id)}
+            className="text-muted-foreground hover:text-foreground p-0.5"
+            aria-label="Dismiss notification"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       ))}
     </div>
   );
 }
 
-// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* ================================================================== */
+/*  MapToolbar (draw controls, layer switch, KML import)               */
+/* ================================================================== */
+
+interface MapToolbarProps {
+  featureGroupRef: React.RefObject<L.FeatureGroup | null>;
+  tileLayer: 'street' | 'satellite';
+  setTileLayer: (l: 'street' | 'satellite') => void;
+  onFeatureCreated: (layer: L.Layer, geoType: string) => void;
+  addToast: (msg: string, type?: Toast['type']) => void;
+  leftPanelOpen: boolean;
+}
+
+function MapToolbar({
+  featureGroupRef,
+  tileLayer,
+  setTileLayer,
+  onFeatureCreated,
+  addToast,
+  leftPanelOpen,
+}: MapToolbarProps) {
+  const map = useMap();
+  const drawRef = useRef<L.Draw.Polyline | L.Draw.Marker | null>(null);
+  const [activeTool, setActiveTool] = useState<string | null>(null);
+
+  /* ---------- draw handlers ---------- */
+  useEffect(() => {
+    const onCreated = (e: L.LeafletEvent) => {
+      const evt = e as L.DrawEvents.Created;
+      featureGroupRef.current?.addLayer(evt.layer);
+      const geo = (evt.layer as L.Layer & { toGeoJSON(): GeoJSON.Feature }).toGeoJSON();
+      onFeatureCreated(evt.layer, geo.geometry.type);
+      setActiveTool(null);
+    };
+    map.on(L.Draw.Event.CREATED, onCreated);
+    return () => { map.off(L.Draw.Event.CREATED, onCreated); };
+  }, [map, featureGroupRef, onFeatureCreated]);
+
+  const startDraw = useCallback(
+    (type: 'marker' | 'polyline') => {
+      drawRef.current?.disable();
+      if (activeTool === type) {
+        setActiveTool(null);
+        return;
+      }
+      const fg = featureGroupRef.current;
+      if (!fg) return;
+      // Cast to DrawMap to satisfy leaflet-draw typings
+      const drawMap = map as unknown as L.DrawMap;
+      if (type === 'marker') {
+        drawRef.current = new L.Draw.Marker(drawMap, { icon: new L.Icon.Default() });
+        addToast('Click on the map to place a marker', 'info');
+      } else {
+        drawRef.current = new L.Draw.Polyline(drawMap, {
+          shapeOptions: { color: '#3B82F6', weight: 4, opacity: 0.85 },
+        });
+        addToast('Click to add points. Double-click to finish the route.', 'info');
+      }
+      drawRef.current.enable();
+      setActiveTool(type);
+    },
+    [map, featureGroupRef, activeTool, addToast],
+  );
+
+  /* ---------- clear ---------- */
+  const clearAll = useCallback(() => {
+    featureGroupRef.current?.clearLayers();
+    addToast('All drawn features cleared', 'info');
+  }, [featureGroupRef, addToast]);
+
+  /* ---------- KML import ---------- */
+  const handleKml = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.kml,.kmz';
+    input.onchange = async (e: Event) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const omnivore = require('leaflet-omnivore');
+        const kmlLayer = omnivore.kml.parse(text);
+        kmlLayer.addTo(map);
+        map.fitBounds(kmlLayer.getBounds(), { padding: [40, 40] });
+        addToast(`KML file "${file.name}" imported`, 'success');
+      } catch {
+        addToast('Failed to parse KML file', 'error');
+      }
+    };
+    input.click();
+  }, [map, addToast]);
+
+  const btnClass = (active?: boolean) =>
+    `p-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary
+     ${active
+       ? 'bg-primary text-primary-foreground shadow-sm'
+       : 'bg-background text-foreground hover:bg-accent border border-border'}`;
+
+  return (
+    <div
+      className={`absolute top-3 z-[1000] flex flex-col gap-1.5 transition-[left] duration-200 ${leftPanelOpen ? 'left-[296px]' : 'left-3'}`}
+      role="toolbar"
+      aria-label="Map drawing tools"
+    >
+      {/* Navigation / Pan */}
+      <button
+        onClick={() => { drawRef.current?.disable(); setActiveTool(null); }}
+        className={btnClass(activeTool === null)}
+        aria-label="Pan mode"
+        aria-pressed={activeTool === null}
+        title="Pan"
+      >
+        <MousePointer className="h-4 w-4" />
+      </button>
+
+      {/* Draw marker */}
+      <button
+        onClick={() => startDraw('marker')}
+        className={btnClass(activeTool === 'marker')}
+        aria-label="Draw marker"
+        aria-pressed={activeTool === 'marker'}
+        title="Place marker"
+      >
+        <MapPin className="h-4 w-4" />
+      </button>
+
+      {/* Draw polyline */}
+      <button
+        onClick={() => startDraw('polyline')}
+        className={btnClass(activeTool === 'polyline')}
+        aria-label="Draw route"
+        aria-pressed={activeTool === 'polyline'}
+        title="Draw route"
+      >
+        <Route className="h-4 w-4" />
+      </button>
+
+      {/* Clear */}
+      <button onClick={clearAll} className={btnClass()} aria-label="Clear drawn features" title="Clear all">
+        <Trash2 className="h-4 w-4" />
+      </button>
+
+      <div className="my-1 border-t border-border" aria-hidden="true" />
+
+      {/* Tile layer toggle */}
+      <button
+        onClick={() => setTileLayer(tileLayer === 'street' ? 'satellite' : 'street')}
+        className={btnClass()}
+        aria-label={`Switch to ${tileLayer === 'street' ? 'satellite' : 'street'} view`}
+        title="Toggle tile layer"
+      >
+        <Satellite className="h-4 w-4" />
+      </button>
+
+      {/* KML Import */}
+      <button onClick={handleKml} className={btnClass()} aria-label="Import KML file" title="Import KML">
+        <Upload className="h-4 w-4" />
+      </button>
+
+      {/* Zoom in / out */}
+      <div className="my-1 border-t border-border" aria-hidden="true" />
+      <button onClick={() => map.zoomIn()} className={btnClass()} aria-label="Zoom in" title="Zoom in">
+        <Plus className="h-4 w-4" />
+      </button>
+      <button onClick={() => map.zoomOut()} className={btnClass()} aria-label="Zoom out" title="Zoom out">
+        <Minus className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  ProjectGeometryLayer — render saved project geometries with        */
+/*  work-type-specific color coding                                    */
+/* ================================================================== */
+
+interface ProjectGeometryLayerProps {
+  projects: PriorityProject[];
+  enabledLayers: Set<string>;
+}
+
+function ProjectGeometryLayer({ projects, enabledLayers }: ProjectGeometryLayerProps) {
+  const map = useMap();
+
+  useEffect(() => {
+    const layers: L.Layer[] = [];
+
+    for (const proj of projects) {
+      if (!enabledLayers.has(proj.work_type)) continue;
+      const wt = getWorkType(proj.work_type);
+
+      try {
+        const geoLayer = L.geoJSON(
+          {
+            type: 'Feature',
+            properties: { title: proj.title, dept: proj.dept },
+            geometry: proj.geometry,
+          } as GeoJSON.Feature,
+          {
+            style: () => ({
+              color: wt.color,
+              weight: proj.geometry.type === 'Point' ? 0 : 4,
+              opacity: 0.85,
+              dashArray: LAYER_DASH[wt.layer],
+              fillColor: wt.color,
+              fillOpacity: 0.18,
+            }),
+            pointToLayer: (_feat, latlng) =>
+              L.circleMarker(latlng, {
+                radius: 8,
+                color: wt.color,
+                fillColor: wt.color,
+                fillOpacity: 0.6,
+                weight: 2,
+              }),
+            onEachFeature: (_feat, layer) => {
+              layer.bindTooltip(
+                `<strong>${proj.title}</strong><br/>${wt.label} — ${proj.dept}`,
+                { sticky: true, className: 'karana-tooltip' },
+              );
+            },
+          },
+        );
+        geoLayer.addTo(map);
+        layers.push(geoLayer);
+      } catch {
+        // skip invalid geometry
+      }
+    }
+
+    return () => {
+      layers.forEach((l) => map.removeLayer(l));
+    };
+  }, [map, projects, enabledLayers]);
+
+  return null;
+}
+
+/* ================================================================== */
+/*  WorkTypeMarkers — cluster-enabled markers grouped by work type     */
+/* ================================================================== */
+
+interface WorkTypeMarkersProps {
+  projects: PriorityProject[];
+  ranked: RankedProject[];
+  enabledLayers: Set<string>;
+}
+
+function WorkTypeMarkers({ projects, ranked, enabledLayers }: WorkTypeMarkersProps) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const MC = require('leaflet.markercluster');
+    void MC; // ensure side-effects
+
+    const groups: L.MarkerClusterGroup[] = [];
+
+    for (const wtId of WORK_TYPE_IDS) {
+      if (!enabledLayers.has(wtId)) continue;
+
+      const cluster = L.markerClusterGroup({
+        iconCreateFunction: (c) => createClusterIcon(wtId, c.getChildCount()),
+        maxClusterRadius: 50,
+        showCoverageOnHover: false,
+      });
+
+      const typeProjects = projects.filter(
+        (p) => p.work_type === wtId,
+      );
+
+      for (const proj of typeProjects) {
+        const rankedEntry = ranked.find((r) => r.id === proj.id);
+        const center = getGeometryCenter(proj.geometry);
+        const icon = createWorkIcon(
+          wtId,
+          rankedEntry?.rank,
+          undefined,
+        );
+        const marker = L.marker(center, { icon });
+        marker.bindPopup(
+          buildPopupHtml(
+            { properties: proj as unknown as Record<string, unknown>, work_type: wtId },
+            rankedEntry?.priorityScore,
+            rankedEntry?.rank,
+            ranked.length,
+          ),
+        );
+        cluster.addLayer(marker);
+      }
+
+      cluster.addTo(map);
+      groups.push(cluster);
+    }
+
+    return () => {
+      groups.forEach((g) => map.removeLayer(g));
+    };
+  }, [map, projects, ranked, enabledLayers]);
+
+  return null;
+}
+
+/* ================================================================== */
+/*  MapRefTracker — captures map instance ref for external use         */
+/* ================================================================== */
+
+function MapRefTracker({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null> }) {
+  const map = useMap();
+  useEffect(() => {
+    mapRef.current = map;
+    return () => { mapRef.current = null; };
+  }, [map, mapRef]);
+  return null;
+}
+
+/* ================================================================== */
+/*  Main MapComponent                                                  */
+/* ================================================================== */
 
 export default function MapComponent() {
-  const initialFeatures = (mockProjectsData as any).features as GeoJsonFeature[];
+  /* ---- State ---- */
+  const featureGroupRef = useRef<L.FeatureGroup | null>(null);
+  const [tileLayer, setTileLayer] = useState<'street' | 'satellite'>('street');
 
-  const [projectsList, setProjectsList] = useState<GeoJsonFeature[]>(initialFeatures);
-  const [visibleDepts, setVisibleDepts] = useState<Set<string>>(new Set(Object.keys(DEPT_COLORS)));
-  const [activeLayer, setActiveLayer] = useState<TileType>('street');
-  const [drawnGeometry, setDrawnGeometry] = useState<GeoJSON.Geometry | null>(null);
-  const [showSaveModal, setShowSaveModal] = useState(false);
+  // Panels
+  const [showLeftPanel, setShowLeftPanel] = useState(false);
+  const [showRightPanel, setShowRightPanel] = useState(false);
+
+  // Project data (starts empty — no mock data)
+  const [projects, setProjects] = useState<PriorityProject[]>([]);
+  const [enabledLayers, setEnabledLayers] = useState<Set<string>>(
+    () => new Set(WORK_TYPE_IDS),
+  );
+
+  // Folder tree state
+  const [folders, setFolders] = useState<ProjectFolder[]>([]);
+  const [hiddenProjectIds, setHiddenProjectIds] = useState<Set<number>>(
+    () => new Set(),
+  );
+  const [mockLoaded, setMockLoaded] = useState(false);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+
+  // Draw / save
+  const [saveModal, setSaveModal] = useState<{
+    open: boolean;
+    layer: L.Layer | null;
+    geoType: string;
+  }>({ open: false, layer: null, geoType: '' });
+
+  // Toast
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastIdRef = useRef(0);
 
-  // â”€â”€ Toast helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const addToast = useCallback((message: string, type: Toast['type'] = 'success') => {
+  /* ---- Derived ---- */
+  const ranked = useMemo(() => rankProjects(projects), [projects]);
+  const phases = useMemo(() => getSequenceOrder(projects), [projects]);
+  const clashCount = useMemo(
+    () => projects.filter((p) => p.clash_with).length,
+    [projects],
+  );
+
+  /* ---- Toast helpers ---- */
+  const addToast = useCallback((message: string, type: Toast['type'] = 'info') => {
     const id = ++toastIdRef.current;
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4500);
   }, []);
-
-  // â”€â”€ Draw handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const handleDrawCreated = useCallback((geojson: GeoJSON.Feature) => {
-    setDrawnGeometry(geojson.geometry);
-    setShowSaveModal(true);
+  const dismissToast = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // â”€â”€ Save project + clash check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const handleSaveProject = useCallback(
-    async (formData: ProjectForm) => {
-      if (!drawnGeometry) return;
-
-      const newFeature: GeoJsonFeature = {
-        type: 'Feature',
-        properties: {
-          id: Date.now(),
-          dept: formData.dept,
-          title: formData.title,
-          start: formData.startDate,
-          end: formData.endDate,
-          cost: formData.cost,
-          risk: 'UNKNOWN',
-          clash_with: null,
-          description: formData.description,
-        },
-        geometry: drawnGeometry as any,
-      };
-
-      setProjectsList((prev) => [...prev, newFeature]);
-      setShowSaveModal(false);
-      setDrawnGeometry(null);
-      addToast(`âœ… "${formData.title}" added to map`, 'success');
-
-      try {
-        const res = await fetch('/api/clashes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ newProject: newFeature, existingProjects: projectsList }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.clashes && data.clashes.length > 0) {
-            const clashNames = data.clashes.map((c: any) => c.dept || c.title).join(', ');
-            addToast(`âš ï¸ CLASH DETECTED with: ${clashNames}`, 'warning');
-            setProjectsList((prev) =>
-              prev.map((f) =>
-                f.properties.id === newFeature.properties.id
-                  ? { ...f, properties: { ...f.properties, risk: 'HIGH', clash_with: clashNames } }
-                  : f
-              )
-            );
-          } else {
-            addToast('âœ… No clashes detected â€” route is clear!', 'success');
-          }
-        }
-      } catch {
-        addToast('â„¹ï¸ Clash check skipped (API unavailable)', 'warning');
-      }
-    },
-    [drawnGeometry, projectsList, addToast]
+  /* ---- Visible projects (hidden filter) ---- */
+  const visibleProjects = useMemo(
+    () => projects.filter((p) => !hiddenProjectIds.has(p.id)),
+    [projects, hiddenProjectIds],
   );
 
-  // â”€â”€ KML callbacks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const handleKMLImport = useCallback(
-    (count: number, filename: string) =>
-      addToast(`ðŸ“‚ KML imported: ${filename} (${count} feature${count !== 1 ? 's' : ''})`, 'success'),
-    [addToast]
-  );
-  const handleKMLError = useCallback(
-    (msg: string) => addToast(`âŒ ${msg}`, 'error'),
-    [addToast]
-  );
-
-  // â”€â”€ Map styling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const featureStyle = useCallback(
-    (feature: any): L.PathOptions => ({
-      color: DEPT_COLORS[feature.properties.dept] || '#666',
-      weight: 4,
-      opacity: 0.9,
-      dashArray: '5, 5',
-      lineCap: 'round',
-      lineJoin: 'round',
-    }),
-    []
-  );
-
-  const onEachFeature = useCallback((feature: any, layer: any) => {
-    const { title, dept, start, end, cost, risk, clash_with } = feature.properties;
-    layer.bindPopup(
-      `<div class="text-sm font-sans p-2 min-w-[160px]">
-        <h3 class="font-bold text-base">${title}</h3>
-        <p class="text-xs text-gray-500">${dept}</p>
-        <p class="text-xs mt-1">${start} â†’ ${end}</p>
-        <p class="text-xs">â‚¹${(cost / 1_000_000).toFixed(1)}L</p>
-        <span class="inline-block mt-1 text-xs px-2 py-0.5 rounded font-semibold
-          ${risk === 'HIGH' ? 'bg-red-200 text-red-800' : risk === 'MEDIUM' ? 'bg-yellow-200 text-yellow-800' : 'bg-green-200 text-green-800'}
-        ">${risk}</span>
-        ${clash_with
-          ? `<p class="mt-2 text-xs text-red-600 font-semibold">âš ï¸ CLASH with ${clash_with}</p>`
-          : '<p class="mt-2 text-xs text-green-600 font-semibold">âœ… No conflicts</p>'
-        }
-      </div>`
-    );
-  }, []);
-
-  // â”€â”€ Derived values â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const filteredFeatures = projectsList.filter((f) => visibleDepts.has(f.properties.dept));
-  const clashCount = projectsList.filter((f) => f.properties.clash_with).length;
-  const totalWaste = projectsList
-    .filter((f) => f.properties.clash_with)
-    .reduce((sum, f) => sum + f.properties.cost * 0.2, 0);
-
-  const handleDeptToggle = (dept: string) => {
-    setVisibleDepts((prev) => {
+  /* ---- Toggle project visibility ---- */
+  const toggleProjectVisibility = useCallback((projectId: number) => {
+    setHiddenProjectIds((prev) => {
       const next = new Set(prev);
-      next.has(dept) ? next.delete(dept) : next.add(dept);
+      if (next.has(projectId)) next.delete(projectId);
+      else next.add(projectId);
       return next;
     });
-  };
+  }, []);
 
-  const activeTile = TILE_CONFIG[activeLayer];
+  /* ---- Zoom to project ---- */
+  const zoomToProject = useCallback(
+    (projectId: number) => {
+      const proj = projects.find((p) => p.id === projectId);
+      if (!proj || !mapInstanceRef.current) return;
+      const center = getGeometryCenter(proj.geometry);
+      mapInstanceRef.current.flyTo(center, 15, { duration: 0.8 });
+    },
+    [projects],
+  );
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  /* ---- Load mock KML data ---- */
+  const loadMockData = useCallback(async () => {
+    if (mockLoaded) {
+      addToast('Mock data already loaded', 'info');
+      return;
+    }
+
+    addToast('Loading 22 mock KML projects...', 'info');
+
+    const newProjects: PriorityProject[] = [];
+    const folderMap = new Map<string, number[]>();
+
+    for (const entry of MOCK_KML_FILES) {
+      try {
+        const resp = await fetch(`/mock-kml/${entry.file}`);
+        if (!resp.ok) continue;
+        const kmlText = await resp.text();
+        const geometry = extractKmlGeometry(kmlText);
+        if (!geometry) continue;
+
+        const proj: PriorityProject = {
+          id: Date.now() + Math.random() * 10000,
+          dept: entry.dept,
+          work_type: entry.type,
+          title: entry.title,
+          start: entry.start,
+          end: entry.end,
+          cost: entry.cost,
+          risk: entry.risk,
+          clash_with: entry.clashWith,
+          geometry: geometry as PriorityProject['geometry'],
+        };
+        newProjects.push(proj);
+
+        // Track folder assignments
+        if (!folderMap.has(entry.folder)) {
+          folderMap.set(entry.folder, []);
+        }
+        folderMap.get(entry.folder)!.push(proj.id);
+      } catch {
+        // skip failed fetches
+      }
+    }
+
+    if (newProjects.length === 0) {
+      addToast('No KML files could be loaded', 'error');
+      return;
+    }
+
+    // Run clash detection between new projects
+    for (let i = 0; i < newProjects.length; i++) {
+      for (let j = i + 1; j < newProjects.length; j++) {
+        const a = newProjects[i];
+        const b = newProjects[j];
+        if (geometriesClash(a.geometry, b.geometry)) {
+          if (!a.clash_with) {
+            a.clash_with = b.dept;
+            a.risk = 'HIGH';
+          }
+          if (!b.clash_with) {
+            b.clash_with = a.dept;
+            b.risk = 'HIGH';
+          }
+        }
+      }
+    }
+
+    // Create folders from mock data categories
+    const newFolders: ProjectFolder[] = MOCK_FOLDERS.map((name) => ({
+      id: createFolderId(),
+      name,
+      expanded: true,
+      projectIds: folderMap.get(name) ?? [],
+    }));
+
+    setProjects((prev) => [...prev, ...newProjects]);
+    setFolders((prev) => [...prev, ...newFolders]);
+    setMockLoaded(true);
+    addToast(`Loaded ${newProjects.length} mock projects into ${newFolders.length} folders`, 'success');
+  }, [mockLoaded, addToast]);
+
+  /* ---- Feature created ---- */
+  const onFeatureCreated = useCallback(
+    (_layer: L.Layer, geoType: string) => {
+      setSaveModal({ open: true, layer: _layer, geoType });
+    },
+    [],
+  );
+
+  /* ---- Save project from modal ---- */
+  const handleSaveProject = useCallback(
+    (form: ProjectForm) => {
+      // Determine geometry: prefer KML, fallback to drawn layer
+      let geometry: PriorityProject['geometry'] | null = null;
+
+      if (form.kmlGeometry) {
+        geometry = form.kmlGeometry as PriorityProject['geometry'];
+      } else if (saveModal.layer) {
+        const geo = (
+          saveModal.layer as L.Layer & { toGeoJSON(): GeoJSON.Feature }
+        ).toGeoJSON();
+        geometry = geo.geometry as PriorityProject['geometry'];
+      }
+
+      if (!geometry) {
+        addToast('No geometry defined — draw on map or import KML', 'error');
+        return;
+      }
+
+      const newProject: PriorityProject = {
+        id: Date.now(),
+        dept: form.dept,
+        work_type: form.work_type || 'ROAD_PAVING',
+        title: form.title,
+        start: form.startDate,
+        end: form.endDate,
+        cost: form.cost,
+        risk: 'LOW',
+        clash_with: null,
+        description: form.description,
+        geometry,
+        ...(form.manualPriority != null ? { manualPriority: form.manualPriority } : {}),
+      };
+
+      // Check for clashes — true spatial proximity check (within 100m)
+      const existingClash = projects.find((p) =>
+        geometriesClash(p.geometry, newProject.geometry),
+      );
+
+      if (existingClash) {
+        newProject.clash_with = existingClash.dept;
+        newProject.risk = 'HIGH';
+        addToast(
+          `Clash detected with ${existingClash.dept} project "${existingClash.title}"`,
+          'warning',
+        );
+      }
+
+      setProjects((prev) => [...prev, newProject]);
+      // Clear the raw drawn layer — it will be re-rendered with work-type colors
+      // by ProjectGeometryLayer
+      if (saveModal.layer && featureGroupRef.current) {
+        featureGroupRef.current.removeLayer(saveModal.layer);
+      }
+      setSaveModal({ open: false, layer: null, geoType: '' });
+      addToast(`Project "${form.title}" saved`, 'success');
+    },
+    [saveModal.layer, projects, addToast],
+  );
+
+  /* ---- Remove project ---- */
+  const removeProject = useCallback(
+    (projectId: number) => {
+      setProjects((prev) => {
+        const target = prev.find((p) => p.id === projectId);
+        if (target) {
+          addToast(`Removed "${target.title}"`, 'info');
+        }
+        return prev.filter((p) => p.id !== projectId);
+      });
+      // Also remove from folders and hidden set
+      setFolders((prev) =>
+        prev.map((f) => ({
+          ...f,
+          projectIds: f.projectIds.filter((id) => id !== projectId),
+        })),
+      );
+      setHiddenProjectIds((prev) => {
+        const next = new Set(prev);
+        next.delete(projectId);
+        return next;
+      });
+    },
+    [addToast],
+  );
+
+  /* ---- Layer toggle ---- */
+  const toggleLayer = useCallback((wtId: string) => {
+    setEnabledLayers((prev) => {
+      const next = new Set(prev);
+      if (next.has(wtId)) next.delete(wtId);
+      else next.add(wtId);
+      return next;
+    });
+  }, []);
+
+  /* ---- Export report ---- */
+  const exportReport = useCallback(() => {
+    if (phases.every((p) => p.projects.length === 0)) {
+      addToast('No projects to export', 'info');
+      return;
+    }
+    const lines: string[] = [
+      'KARANA PRIORITY EXECUTION REPORT',
+      `Generated: ${new Date().toLocaleString()}`,
+      `Total Projects: ${projects.length}`,
+      `Conflicts: ${clashCount}`,
+      '',
+    ];
+    for (const phase of phases) {
+      if (phase.projects.length === 0) continue;
+      lines.push(`--- ${phase.phase}: ${phase.label} ---`);
+      for (const p of phase.projects) {
+        lines.push(
+          `  #${p.rank} | ${p.title} (${p.dept}) | Score: ${p.priorityScore} | ${p.work_type}`,
+        );
+      }
+      lines.push('');
+    }
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `karana-priority-report-${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    addToast('Report exported', 'success');
+  }, [phases, projects.length, clashCount, addToast]);
+
+  /* ---- Tile config ---- */
+  const tile = TILE_LAYERS[tileLayer];
+
   return (
-    <>
-      <div className="w-full h-screen flex bg-gradient-to-br from-slate-900 via-slate-900 to-blue-900">
-
-        {/* â”€â”€ Left Panel â”€â”€ */}
-        <aside
-          aria-label="Project list and department filters"
-          className="w-80 bg-black/40 backdrop-blur-xl border-r border-white/10 overflow-y-auto hidden lg:flex flex-col"
+    <div className="relative h-screen w-full bg-background">
+      {/* ======================== TOP BAR ======================== */}
+      <div className="absolute top-0 left-0 right-0 z-[1001] h-12 flex items-center gap-2 px-3 bg-background/90 backdrop-blur-sm border-b border-border">
+        {/* Left panel hamburger */}
+        <button
+          onClick={() => setShowLeftPanel((v) => !v)}
+          className="p-2 rounded-lg hover:bg-accent transition focus:outline-none focus:ring-2 focus:ring-primary"
+          aria-label={showLeftPanel ? 'Hide work layers panel' : 'Show work layers panel'}
+          aria-expanded={showLeftPanel}
+          title="Work layers"
         >
-          <div className="p-6 border-b border-white/10">
-            <h2 className="text-xl font-bold text-white mb-4">Active Projects</h2>
-            <fieldset>
-              <legend className="sr-only">Filter by department</legend>
-              <div className="space-y-2">
-                {Object.entries(DEPT_COLORS).map(([dept, color]) => (
-                  <label key={dept} className="flex items-center space-x-3 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={visibleDepts.has(dept)}
-                      onChange={() => handleDeptToggle(dept)}
-                      aria-label={`Toggle ${dept} projects`}
-                      className="w-4 h-4 rounded accent-blue-600"
-                    />
-                    <span
-                      className="w-4 h-1 rounded-full"
-                      style={{ backgroundColor: color }}
-                      aria-hidden="true"
-                    />
-                    <span className="text-sm text-gray-200 group-hover:text-white transition">
-                      {dept}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          </div>
+          {showLeftPanel ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
 
-          <ul className="flex-1 p-6 space-y-4" aria-label="Project cards">
-            {filteredFeatures.map((feature) => (
-              <li
-                key={feature.properties.id}
-                className="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition"
-              >
-                <p className="font-semibold text-sm text-white">{feature.properties.title}</p>
-                <div className="mt-2 space-y-1 text-xs text-gray-300">
-                  <p className="flex items-center gap-2">
-                    <span
-                      className="w-3 h-1 rounded-full"
-                      style={{ backgroundColor: DEPT_COLORS[feature.properties.dept] || '#888' }}
-                      aria-hidden="true"
-                    />
-                    {feature.properties.dept}
-                  </p>
-                  <p>â‚¹{(feature.properties.cost / 1_000_000).toFixed(1)}L</p>
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
-                      feature.properties.risk === 'HIGH'
-                        ? 'bg-red-500/20 text-red-300'
-                        : feature.properties.risk === 'MEDIUM'
-                        ? 'bg-yellow-500/20 text-yellow-300'
-                        : feature.properties.risk === 'UNKNOWN'
-                        ? 'bg-gray-500/20 text-gray-300'
-                        : 'bg-green-500/20 text-green-300'
-                    }`}
-                  >
-                    {feature.properties.risk}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </aside>
-
-        {/* â”€â”€ Map Area â”€â”€ */}
-        <div className="flex-1 relative">
-          <MapContainer
-            center={[26.2298, 78.1734]}
-            zoom={13}
-            minZoom={12}
-            maxZoom={20}
-            maxBounds={[[26.18, 78.1], [26.28, 78.24]]}
-            maxBoundsViscosity={1.0}
-            className="w-full h-full"
-            style={{ background: '#0f172a' }}
-          >
-            {/* Active Tile Layer â€” key forces react-leaflet to swap on change */}
-            <TileLayer
-              key={activeLayer}
-              url={activeTile.url}
-              attribution={activeTile.attribution}
-              maxZoom={activeTile.maxZoom}
-            />
-
-            {/* Gwalior boundary circle */}
-            <LayerGroup>
-              <Circle
-                center={[26.2298, 78.1734]}
-                radius={6000}
-                pathOptions={{
-                  color: '#1e3a8a',
-                  fill: true,
-                  fillOpacity: 0.04,
-                  weight: 2,
-                  dashArray: '5, 5',
-                }}
-              />
-            </LayerGroup>
-
-            {/* Project GeoJSON layers */}
-            {filteredFeatures.map((feature) => (
-              <LayerGroup key={feature.properties.id}>
-                <GeoJSON
-                  data={feature as any}
-                  style={featureStyle}
-                  onEachFeature={onEachFeature}
-                />
-                {feature.properties.risk === 'HIGH' &&
-                  feature.geometry.type === 'LineString' &&
-                  Array.isArray(feature.geometry.coordinates) &&
-                  feature.geometry.coordinates.length >= 2 && (
-                    <Circle
-                      center={[
-                        ((feature.geometry.coordinates as number[][])[0][1] +
-                          (feature.geometry.coordinates as number[][])[1][1]) / 2,
-                        ((feature.geometry.coordinates as number[][])[0][0] +
-                          (feature.geometry.coordinates as number[][])[1][0]) / 2,
-                      ]}
-                      radius={300}
-                      pathOptions={{ color: '#EF4444', fill: true, fillOpacity: 0.15, weight: 1 }}
-                    />
-                  )}
-              </LayerGroup>
-            ))}
-
-            {/* Draw toolbar (inner â€” uses useMap) */}
-            <DrawControl onDrawCreated={handleDrawCreated} />
-
-            {/* KML import button (inner â€” uses useMap) */}
-            <KMLControl onImport={handleKMLImport} onError={handleKMLError} />
-          </MapContainer>
-
-          {/* â”€â”€ Tile Layer Switcher â”€â”€ */}
-          <div
-            role="group"
-            aria-label="Map layer switcher"
-            className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-1 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-xl p-1 shadow-xl"
-          >
-            {(Object.keys(TILE_CONFIG) as TileType[]).map((type) => {
-              const cfg = TILE_CONFIG[type];
-              const isActive = activeLayer === type;
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setActiveLayer(type)}
-                  aria-pressed={isActive}
-                  aria-label={`Switch to ${cfg.label} view`}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${
-                    isActive
-                      ? 'bg-blue-800 text-white shadow-md'
-                      : 'text-gray-300 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  <span aria-hidden="true">{cfg.icon}</span>
-                  {cfg.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* â”€â”€ Toast Notifications â”€â”€ */}
-          <ToastContainer toasts={toasts} />
-
-          {/* â”€â”€ Clash Summary Panel â”€â”€ */}
-          <aside
-            aria-label="Conflict summary"
-            className="absolute top-4 right-4 bg-black/50 backdrop-blur-xl border border-white/10 rounded-2xl p-5 w-72 shadow-2xl z-[1000]"
-          >
-            <h3 className="text-base font-bold text-white mb-3">Conflict Summary</h3>
-            <div className="space-y-3">
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
-                <p className="text-xs text-gray-300">Active Clashes</p>
-                <p className="text-2xl font-bold text-red-400" aria-live="polite">{clashCount}</p>
-              </div>
-              <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
-                <p className="text-xs text-gray-300">Total Waste Risk</p>
-                <p className="text-2xl font-bold text-orange-400" aria-live="polite">
-                  â‚¹{(totalWaste / 10_000_000).toFixed(1)}Cr
-                </p>
-              </div>
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
-                <p className="text-xs text-gray-300">Total Projects</p>
-                <p className="text-2xl font-bold text-blue-400" aria-live="polite">
-                  {projectsList.length}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const report = [
-                    'Karana Platform â€” Conflict Report',
-                    `Date: ${new Date().toLocaleDateString('en-IN')}`,
-                    '',
-                    `Active Clashes: ${clashCount}`,
-                    `Financial Risk: â‚¹${(totalWaste / 10_000_000).toFixed(1)} Crore`,
-                    `Total Projects: ${projectsList.length}`,
-                    '',
-                    'Clashing Projects:',
-                    ...projectsList
-                      .filter((f) => f.properties.clash_with)
-                      .map(
-                        (f) =>
-                          `  - ${f.properties.dept}: ${f.properties.title} (â‚¹${(f.properties.cost / 1_000_000).toFixed(1)}L)`
-                      ),
-                  ].join('\n');
-                  const blob = new Blob([report], { type: 'text/plain' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'karana-conflict-report.txt';
-                  a.click();
-                  URL.revokeObjectURL(url);
-                }}
-                className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-2 rounded-lg transition text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              >
-                ðŸ“„ Export Report
-              </button>
-            </div>
-          </aside>
+        <div className="flex items-center gap-1.5">
+          <Layers className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <span className="text-sm font-medium text-foreground">Live Map</span>
         </div>
+
+        <div className="flex-1" />
+
+        {/* Stats */}
+        {projects.length > 0 && (
+          <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground">
+            <span>{projects.length} project{projects.length !== 1 ? 's' : ''}</span>
+            {clashCount > 0 && (
+              <span className="flex items-center gap-1 text-amber-600">
+                <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+                {clashCount} clash{clashCount !== 1 ? 'es' : ''}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* New project button */}
+        <button
+          onClick={() => setSaveModal({ open: true, layer: null, geoType: '' })}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          title="Create new project"
+        >
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          <span className="hidden sm:inline">New Project</span>
+        </button>
+
+        {/* Load mock data */}
+        {!mockLoaded && (
+          <button
+            onClick={loadMockData}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-accent transition focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            title="Load 22 demo Gwalior infrastructure projects"
+          >
+            <Database className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Mock Data</span>
+          </button>
+        )}
+
+        {/* Right panel hamburger */}
+        <button
+          onClick={() => setShowRightPanel((v) => !v)}
+          className="p-2 rounded-lg hover:bg-accent transition focus:outline-none focus:ring-2 focus:ring-primary"
+          aria-label={showRightPanel ? 'Hide project panel' : 'Show project panel'}
+          aria-expanded={showRightPanel}
+          title="Project manager"
+        >
+          {showRightPanel ? <X className="h-5 w-5" /> : <FolderTreeIcon className="h-5 w-5" />}
+        </button>
       </div>
 
-      {/* Save Modal â€” outside MapContainer to avoid z-index issues */}
+      {/* ======================== LEFT PANEL — Work Layers ======================== */}
+      {showLeftPanel && (
+        <div
+          className="absolute top-12 left-0 z-[1000] w-72 bottom-0 bg-background border-r border-border overflow-y-auto"
+          role="region"
+          aria-label="Work layers panel"
+        >
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-foreground">Work Layers</h2>
+              <button
+                onClick={() => setShowLeftPanel(false)}
+                className="p-1 rounded hover:bg-accent text-muted-foreground"
+                aria-label="Close work layers panel"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-1">
+              {WORK_TYPE_IDS.map((wtId) => {
+                const wt = getWorkType(wtId);
+                const enabled = enabledLayers.has(wtId);
+                const count = projects.filter((p) => p.work_type === wtId).length;
+
+                return (
+                  <button
+                    key={wtId}
+                    onClick={() => toggleLayer(wtId)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition focus:outline-none focus:ring-2 focus:ring-primary ${
+                      enabled
+                        ? 'bg-accent/50'
+                        : 'opacity-50 hover:opacity-75'
+                    }`}
+                    aria-pressed={enabled}
+                    aria-label={`${enabled ? 'Hide' : 'Show'} ${wt.label} layer`}
+                  >
+                    <span
+                      className="flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: wt.color }}
+                      aria-hidden="true"
+                      dangerouslySetInnerHTML={{
+                        __html: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none">${wt.iconSvg}</svg>`,
+                      }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {wt.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {wt.layer} &middot; {wt.depts.join(', ')}
+                      </p>
+                    </div>
+                    {count > 0 && (
+                      <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Legend separator */}
+            <div className="mt-6 pt-4 border-t border-border">
+              <p className="text-xs font-medium text-muted-foreground mb-2">
+                Layer Classification
+              </p>
+              <div className="space-y-1.5 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-red-500" aria-hidden="true" />
+                  Underground (do first)
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" aria-hidden="true" />
+                  Surface (do second)
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-green-500" aria-hidden="true" />
+                  Road (do last)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================== RIGHT PANEL — Project Manager ======================== */}
+      {showRightPanel && (
+        <div
+          className="absolute top-12 right-0 z-[1000] w-80 bottom-0 bg-background border-l border-border overflow-y-auto"
+          role="region"
+          aria-label="Project manager panel"
+        >
+          <div className="p-4 flex flex-col h-full">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-foreground">
+                Project Manager
+              </h2>
+              <button
+                onClick={() => setShowRightPanel(false)}
+                className="p-1 rounded hover:bg-accent text-muted-foreground"
+                aria-label="Close project panel"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            <FolderTree
+              folders={folders}
+              ranked={ranked}
+              hiddenProjectIds={hiddenProjectIds}
+              clashCount={clashCount}
+              onFoldersChange={setFolders}
+              onToggleProjectVisibility={toggleProjectVisibility}
+              onRemoveProject={removeProject}
+              onZoomToProject={zoomToProject}
+              onAddProject={() =>
+                setSaveModal({ open: true, layer: null, geoType: '' })
+              }
+              onExportReport={exportReport}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ======================== MAP ======================== */}
+      <MapContainer
+        center={GWALIOR}
+        zoom={13}
+        zoomControl={false}
+        className="h-full w-full"
+        style={{ paddingTop: '48px' }}
+      >
+        <TileLayer url={tile.url} attribution={tile.attr} />
+
+        <MapRefTracker mapRef={mapInstanceRef} />
+
+        <FeatureGroup ref={featureGroupRef}>
+          {/* User-drawn GeoJSON features rendered automatically by FeatureGroup */}
+        </FeatureGroup>
+
+        <MapToolbar
+          featureGroupRef={featureGroupRef}
+          tileLayer={tileLayer}
+          setTileLayer={setTileLayer}
+          onFeatureCreated={onFeatureCreated}
+          addToast={addToast}
+          leftPanelOpen={showLeftPanel}
+        />
+
+        {/* Color-coded project geometry lines/polygons */}
+        {visibleProjects.length > 0 && (
+          <ProjectGeometryLayer
+            projects={visibleProjects}
+            enabledLayers={enabledLayers}
+          />
+        )}
+
+        {/* Clustered work type markers for user-created projects */}
+        {visibleProjects.length > 0 && (
+          <WorkTypeMarkers
+            projects={visibleProjects}
+            ranked={ranked}
+            enabledLayers={enabledLayers}
+          />
+        )}
+      </MapContainer>
+
+      {/* ======================== MODALS & OVERLAYS ======================== */}
       <SaveProjectModal
-        isOpen={showSaveModal}
-        geometryType={drawnGeometry?.type ?? ''}
+        isOpen={saveModal.open}
+        geometryType={saveModal.geoType}
         onSave={handleSaveProject}
-        onClose={() => {
-          setShowSaveModal(false);
-          setDrawnGeometry(null);
-        }}
+        onClose={() => setSaveModal({ open: false, layer: null, geoType: '' })}
       />
-    </>
+
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+    </div>
   );
 }
