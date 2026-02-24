@@ -139,10 +139,10 @@ export default function MapComponent() {
                   <span
                     className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${
                       feature.properties.risk === 'HIGH'
-                        ? 'bg-destructive/20 text-red-400'
+                        ? 'bg-destructive/10 text-red-700'
                         : feature.properties.risk === 'MEDIUM'
-                        ? 'bg-yellow-500/20 text-yellow-400'
-                        : 'bg-emerald-500/20 text-emerald-400'
+                        ? 'bg-yellow-500/10 text-yellow-700'
+                        : 'bg-emerald-500/10 text-emerald-700'
                     }`}
                   >
                     {feature.properties.risk}
@@ -163,7 +163,7 @@ export default function MapComponent() {
           maxBounds={[[26.18, 78.1], [26.28, 78.24]]}
           maxBoundsViscosity={1.0}
           className="h-full w-full"
-          style={{ background: '#0f172a' }}
+          style={{ background: '#f8fafc' }}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -217,12 +217,12 @@ export default function MapComponent() {
           <div className="mt-4 space-y-3">
             <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
               <p className="text-xs text-muted-foreground">Active Clashes</p>
-              <p className="text-xl font-bold text-red-400">{clashCount}</p>
+              <p className="text-xl font-bold text-red-600">{clashCount}</p>
             </div>
 
             <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 p-3">
               <p className="text-xs text-muted-foreground">Total Waste Risk</p>
-              <p className="text-xl font-bold text-orange-400">
+              <p className="text-xl font-bold text-orange-600">
                 ₹{(totalWaste / 10000000).toFixed(1)}Cr
               </p>
             </div>

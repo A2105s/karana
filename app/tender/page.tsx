@@ -2,29 +2,29 @@
 
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
-import jsPDF from 'jspdf';
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '@/components/ui/select';
+import jsPDF from 'jspdf';
 import {
-  AlertTriangle,
-  CheckCircle2,
-  FileDown,
-  Loader2,
-  Search,
+    AlertTriangle,
+    CheckCircle2,
+    FileDown,
+    Loader2,
+    Search,
 
-  Sparkles,
+    Sparkles,
 } from 'lucide-react';
+import { useState } from 'react';
 
 export default function TenderPage() {
   const [formData, setFormData] = useState({
@@ -241,7 +241,7 @@ export default function TenderPage() {
                     {clashes.clashes.length > 0 ? (
                       <AlertTriangle className="h-4 w-4 text-destructive" aria-hidden="true" />
                     ) : (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400" aria-hidden="true" />
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
                     )}
                     Clash Analysis Result
                   </CardTitle>
@@ -277,7 +277,7 @@ export default function TenderPage() {
                             </div>
                             <div>
                               <p className="text-muted-foreground">Potential Waste</p>
-                              <p className="text-base font-semibold text-orange-400 mt-0.5">₹{(riskScore.waste_inr / 1000000).toFixed(1)}L</p>
+                              <p className="text-base font-semibold text-orange-600 mt-0.5">₹{(riskScore.waste_inr / 1000000).toFixed(1)}L</p>
                             </div>
                             <div>
                               <p className="text-muted-foreground">Recommendation</p>
@@ -293,7 +293,7 @@ export default function TenderPage() {
                       </Button>
                     </>
                   ) : (
-                    <p className="text-sm text-emerald-400 flex items-center gap-2">
+                    <p className="text-sm text-emerald-600 flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                       No conflicts detected — safe to proceed
                     </p>

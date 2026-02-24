@@ -2,12 +2,12 @@
 
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
-import VoiceQuery from '@/components/VoiceQuery';
-import { useEffect, useRef, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import VoiceQuery from '@/components/VoiceQuery';
 import { Camera, MapPin, ShieldAlert, Volume2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function ARPage() {
   const videoRef = useRef<HTMLVideoElement>(null);

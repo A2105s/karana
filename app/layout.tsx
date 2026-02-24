@@ -1,13 +1,14 @@
+import { TooltipProvider } from "@/components/ui/tooltip";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Karana Platform",
-  description: "One Map. One Brain. Zero Wasted Crores. — AI-powered infrastructure coordination for Indian government departments.",
+  title: "Karana Platform — Infrastructure Coordination Made Effortless",
+  description:
+    "AI-powered infrastructure coordination platform for Indian government departments. Detect clashes, score risk, and save crores — aligned with GatiShakti.",
 };
 
 export default function RootLayout({

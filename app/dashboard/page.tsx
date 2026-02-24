@@ -2,19 +2,19 @@
 
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
-import mockProjects from '@/data/mockProjects.json';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from '@/components/ui/table';
-import { FolderKanban, AlertTriangle, IndianRupee, TrendingDown, GitMerge } from 'lucide-react';
+import mockProjects from '@/data/mockProjects.json';
+import { AlertTriangle, FolderKanban, GitMerge, IndianRupee, TrendingDown } from 'lucide-react';
 
 export default function DashboardPage() {
   const projects = (mockProjects as any).features;
@@ -25,8 +25,8 @@ export default function DashboardPage() {
   const stats = [
     { label: 'Total Projects', value: projects.length, icon: FolderKanban, accent: 'text-primary' },
     { label: 'Active Clashes', value: clashingProjects.length, icon: AlertTriangle, accent: 'text-destructive' },
-    { label: 'Total Investment', value: `₹${(totalCost / 10000000).toFixed(1)}Cr`, icon: IndianRupee, accent: 'text-emerald-400' },
-    { label: 'Waste at Risk', value: `₹${(wasteRisk / 10000000).toFixed(1)}Cr`, icon: TrendingDown, accent: 'text-orange-400' },
+    { label: 'Total Investment', value: `₹${(totalCost / 10000000).toFixed(1)}Cr`, icon: IndianRupee, accent: 'text-emerald-600' },
+    { label: 'Waste at Risk', value: `₹${(wasteRisk / 10000000).toFixed(1)}Cr`, icon: TrendingDown, accent: 'text-orange-600' },
   ];
 
   const riskVariant = (risk: string) => {

@@ -1,19 +1,19 @@
 'use client';
 
-import Link from 'next/link';
-import { useState } from 'react';
-import { Zap, Menu } from 'lucide-react';
+import SidebarNav from '@/components/Sidebar';
 import { Button } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import SidebarNav from '@/components/Sidebar';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Menu, Zap } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
 
 export default function Navbar() {
   const [role, setRole] = useState('commissioner');

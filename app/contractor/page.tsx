@@ -5,12 +5,12 @@ import Sidebar from '@/components/Sidebar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from '@/components/ui/table';
 import { Clock, IndianRupee, Medal, Trophy } from 'lucide-react';
 
@@ -35,15 +35,15 @@ export default function ContractorPage() {
   const totalPenalties = sortedContractors.reduce((sum, c) => sum + c.penalty, 0);
 
   const rankIcon = (idx: number) => {
-    if (idx === 0) return <Medal className="h-4 w-4 text-yellow-400" aria-label="Rank 1" />;
-    if (idx === 1) return <Medal className="h-4 w-4 text-gray-400" aria-label="Rank 2" />;
-    if (idx === 2) return <Medal className="h-4 w-4 text-orange-400" aria-label="Rank 3" />;
+    if (idx === 0) return <Medal className="h-4 w-4 text-yellow-500" aria-label="Rank 1" />;
+    if (idx === 1) return <Medal className="h-4 w-4 text-gray-500" aria-label="Rank 2" />;
+    if (idx === 2) return <Medal className="h-4 w-4 text-orange-500" aria-label="Rank 3" />;
     return <span className="text-xs text-muted-foreground w-4 text-center">{idx + 1}</span>;
   };
 
   const scoreColor = (score: number) => {
-    if (score >= 80) return 'text-emerald-400';
-    if (score >= 60) return 'text-yellow-400';
+    if (score >= 80) return 'text-emerald-600';
+    if (score >= 60) return 'text-yellow-600';
     return 'text-destructive';
   };
 
@@ -66,7 +66,7 @@ export default function ContractorPage() {
               <CardContent className="p-5">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-medium text-muted-foreground">Top Performer</p>
-                  <Trophy className="h-4 w-4 text-yellow-400" aria-hidden="true" />
+                  <Trophy className="h-4 w-4 text-yellow-500" aria-hidden="true" />
                 </div>
                 <p className="text-lg font-semibold mt-2">{sortedContractors[0].name}</p>
               </CardContent>
@@ -76,7 +76,7 @@ export default function ContractorPage() {
               <CardContent className="p-5">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-medium text-muted-foreground">Avg. Delay</p>
-                  <Clock className="h-4 w-4 text-orange-400" aria-hidden="true" />
+                  <Clock className="h-4 w-4 text-orange-500" aria-hidden="true" />
                 </div>
                 <p className="text-lg font-semibold mt-2">{avgDelay} days</p>
               </CardContent>
