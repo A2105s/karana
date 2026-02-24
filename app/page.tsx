@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, AlertTriangle, BarChart2, BarChart3, Brain, FileText, Globe, LayoutDashboard, Map, MapPin, Mic, ShieldCheck, Users, Zap } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BarChart2, BarChart3, Brain, FileText, Globe, LayoutDashboard, Map, MapPin, Mic, ShieldCheck, Users, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
