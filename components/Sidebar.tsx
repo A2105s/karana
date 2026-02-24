@@ -1,50 +1,60 @@
 'use client';
 
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
+import { Camera, FileText, LayoutDashboard, MapPin, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { href: '/map', label: 'Live Map', icon: '🗺️' },
-  { href: '/tender', label: 'Tender', icon: '📝' },
-  { href: '/ar', label: 'AR View', icon: '📱' },
-  { href: '/contractor', label: 'Scoreboard', icon: '🏆' },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/map', label: 'Live Map', icon: MapPin },
+  { href: '/tender', label: 'Tender', icon: FileText },
+  { href: '/ar', label: 'AR View', icon: Camera },
+  { href: '/contractor', label: 'Scoreboard', icon: Trophy },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-black/40 backdrop-blur-xl border-r border-white/10 hidden lg:flex flex-col">
-      <div className="p-6 border-b border-white/10">
-        <h2 className="font-bold text-lg text-white">Navigation</h2>
-      </div>
-
-      <nav className="flex-1 p-6 space-y-3">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              <span className="text-xl">{item.icon}</span>
-              <span className="font-medium">{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="p-6 border-t border-white/10">
-        <div className="text-xs text-gray-400 text-center">
-          <p>Karana Platform</p>
-          <p>GatiShakti Ready</p>
+    <aside className="w-60 border-r border-border bg-sidebar hidden lg:flex flex-col shrink-0">
+      <ScrollArea className="flex-1">
+        <div className="px-3 py-4">
+          <p className="px-3 mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Navigation
+          </p>
+          <nav className="space-y-1" aria-label="Main navigation">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  )}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
         </div>
+      </ScrollArea>
+
+      <Separator />
+      <div className="px-4 py-3">
+        <p className="text-[11px] text-muted-foreground text-center">
+          Karana Platform &middot; GatiShakti Ready
+        </p>
       </div>
     </aside>
   );

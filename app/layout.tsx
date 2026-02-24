@@ -1,12 +1,14 @@
+import { TooltipProvider } from "@/components/ui/tooltip";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Karana Platform",
-  description: "One Map. One Brain. Zero Wasted Crores. - Infrastructure Coordination Platform",
+  title: "Karana Platform — Infrastructure Coordination Made Effortless",
+  description:
+    "AI-powered infrastructure coordination platform for Indian government departments. Detect clashes, score risk, and save crores — aligned with GatiShakti.",
 };
 
 export default function RootLayout({
@@ -16,7 +18,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased`}>{children}</body>
+      <body className={`${inter.className} antialiased`}>
+        <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+      </body>
     </html>
   );
 }

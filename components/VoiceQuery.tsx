@@ -1,5 +1,7 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
+import { Mic, Volume2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 export default function VoiceQuery() {
@@ -39,25 +41,33 @@ export default function VoiceQuery() {
   };
 
   return (
-    <div className="flex items-center space-x-2">
-      <button
+    <div className="flex items-center gap-2">
+      <Button
         onClick={startListening}
         disabled={isListening}
-        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded-lg text-sm font-medium transition"
+        size="sm"
+        variant={isListening ? 'secondary' : 'default'}
+        aria-label={isListening ? 'Listening for voice input' : 'Start voice query'}
       >
-        {isListening ? '🎤 Listening...' : '🎤 Voice Query'}
-      </button>
+        <Mic className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+        {isListening ? 'Listening...' : 'Voice Query'}
+      </Button>
 
       {transcript && (
-        <button
+        <Button
           onClick={() => speak('यहाँ खतरा है')}
-          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition"
+          size="sm"
+          variant="destructive"
+          aria-label="Speak warning aloud"
         >
-          🔊 Warning
-        </button>
+          <Volume2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+          Warning
+        </Button>
       )}
 
-      {transcript && <span className="text-sm text-gray-300">{transcript}</span>}
+      {transcript && (
+        <span className="text-sm text-muted-foreground" aria-live="polite">{transcript}</span>
+      )}
     </div>
   );
 }

@@ -2,7 +2,28 @@
 
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import jsPDF from 'jspdf';
+import {
+    AlertTriangle,
+    CheckCircle2,
+    FileDown,
+    Loader2,
+    Search,
+
+    Sparkles,
+} from 'lucide-react';
 import { useState } from 'react';
 
 export default function TenderPage() {
@@ -24,7 +45,6 @@ export default function TenderPage() {
     setIsLoading(true);
 
     try {
-      // Create GeoJSON project
       const newProject = {
         type: 'Feature',
         properties: {
@@ -44,7 +64,6 @@ export default function TenderPage() {
         },
       };
 
-      // Check for clashes
       const clashRes = await fetch('/api/clashes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,7 +74,6 @@ export default function TenderPage() {
       setClashes(clashData);
 
       if (clashData.clashes.length > 0) {
-        // Score risk for first clash
         const riskRes = await fetch('/api/score-risk', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -95,12 +113,11 @@ export default function TenderPage() {
 
       const { nit } = await nitRes.json();
 
-      // Generate PDF
       const doc = new jsPDF();
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
       doc.text('Notice Inviting Tender (NIT)', 20, 20);
-      
+
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
       const splitText = doc.splitTextToSize(nit, 170);
@@ -113,154 +130,176 @@ export default function TenderPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-blue-900">
+    <div className="flex min-h-screen flex-col">
       <Navbar />
-      
-      <div className="flex">
+
+      <div className="flex flex-1">
         <Sidebar />
-        
-        <main className="flex-1 p-8">
-          <div className="max-w-2xl">
-            <h1 className="text-3xl font-bold text-white mb-8">New Tender Submission</h1>
 
-            <form onSubmit={handleSubmit} className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 space-y-6 mb-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">Department</label>
-                  <select
-                    value={formData.dept}
-                    onChange={(e) => setFormData({ ...formData, dept: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-blue-500"
-                  >
-                    <option>PWD</option>
-                    <option>WATER</option>
-                    <option>BESCOM</option>
-                    <option>MUNICIPAL</option>
-                    <option>TELECOM</option>
-                  </select>
-                </div>
+        <main className="flex-1 p-6 lg:p-8 space-y-6 overflow-auto">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">New Tender Submission</h1>
+            <p className="text-sm text-muted-foreground mt-1">Submit a project tender and check for infrastructure clashes</p>
+          </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">Project Title</label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="e.g. Road Resurfacing"
-                    className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">Location</label>
-                <input
-                  type="text"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="e.g. MLN Road, Gwalior"
-                  className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">Start Date</label>
-                  <input
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">End Date</label>
-                  <input
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-2">Estimated Cost (₹)</label>
-                  <input
-                    type="number"
-                    value={formData.cost}
-                    onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                    placeholder="0"
-                    className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 text-white font-bold rounded-lg transition"
-              >
-                {isLoading ? 'Checking for Clashes...' : 'Submit & Check Clashes'}
-              </button>
-            </form>
-
-            {/* Clash Results */}
-            {clashes && (
-              <div
-                className={`bg-black/40 backdrop-blur-xl border rounded-2xl p-6 mb-8 ${
-                  clashes.clashes.length > 0
-                    ? 'border-red-500/30 bg-red-500/5'
-                    : 'border-green-500/30 bg-green-500/5'
-                }`}
-              >
-                <h3 className="text-lg font-bold text-white mb-4">Clash Analysis Result</h3>
-                
-                {clashes.clashes.length > 0 ? (
-                  <div className="space-y-4">
-                    <p className="text-red-300 font-semibold">
-                      ⚠️ {clashes.clashes.length} Clash(es) Detected!
-                    </p>
-                    
-                    <div className="space-y-3">
-                      {clashes.clashes.map((clash: any) => (
-                        <div key={clash.id} className="bg-white/5 border border-white/10 rounded-lg p-3">
-                          <p className="text-white font-semibold">{clash.title}</p>
-                          <p className="text-sm text-gray-300">
-                            {clash.dept} • ₹{(clash.cost / 1000000).toFixed(1)}L
-                          </p>
-                        </div>
-                      ))}
+          <div className="max-w-2xl space-y-6">
+            {/* Form */}
+            <Card className="bg-card border-border">
+              <CardContent className="p-6">
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="dept">Department</Label>
+                      <Select value={formData.dept} onValueChange={(val) => setFormData({ ...formData, dept: val })}>
+                        <SelectTrigger id="dept">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PWD">PWD</SelectItem>
+                          <SelectItem value="WATER">WATER</SelectItem>
+                          <SelectItem value="BESCOM">BESCOM</SelectItem>
+                          <SelectItem value="MUNICIPAL">MUNICIPAL</SelectItem>
+                          <SelectItem value="TELECOM">TELECOM</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
-                    {riskScore && (
-                      <div className="mt-4 bg-white/5 border border-white/10 rounded-lg p-4">
-                        <h4 className="font-semibold text-white mb-2">AI Risk Assessment</h4>
-                        <div className="space-y-2 text-sm">
-                          <p className="text-gray-300">
-                            Risk Score: <span className="text-red-400 font-bold">{riskScore.risk_score}/10</span>
-                          </p>
-                          <p className="text-gray-300">
-                            Potential Waste: <span className="text-orange-400 font-bold">₹{(riskScore.waste_inr / 1000000).toFixed(1)}L</span>
-                          </p>
-                          <p className="text-gray-300">
-                            Recommendation: <span className="text-blue-400 font-semibold capitalize">{riskScore.recommendation}</span>
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    <button
-                      onClick={generateNIT}
-                      className="w-full px-6 py-2 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-semibold rounded-lg transition mt-4"
-                    >
-                      📄 Generate Combined NIT & Download PDF
-                    </button>
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Project Title</Label>
+                      <Input
+                        id="title"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        placeholder="e.g. Road Resurfacing"
+                      />
+                    </div>
                   </div>
-                ) : (
-                  <p className="text-green-300">✅ No conflicts detected - Safe to proceed!</p>
-                )}
-              </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      placeholder="e.g. MLN Road, Gwalior"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="startDate">Start Date</Label>
+                      <Input
+                        id="startDate"
+                        type="date"
+                        value={formData.startDate}
+                        onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="endDate">End Date</Label>
+                      <Input
+                        id="endDate"
+                        type="date"
+                        value={formData.endDate}
+                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cost">Estimated Cost (₹)</Label>
+                      <Input
+                        id="cost"
+                        type="number"
+                        value={formData.cost}
+                        onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+
+                  <Button type="submit" disabled={isLoading} className="w-full">
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                        Checking for Clashes...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="mr-2 h-4 w-4" aria-hidden="true" />
+                        Submit &amp; Check Clashes
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Results */}
+            {clashes && (
+              <Card className={clashes.clashes.length > 0 ? 'border-destructive/40' : 'border-emerald-500/40'}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    {clashes.clashes.length > 0 ? (
+                      <AlertTriangle className="h-4 w-4 text-destructive" aria-hidden="true" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                    )}
+                    Clash Analysis Result
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {clashes.clashes.length > 0 ? (
+                    <>
+                      <p className="text-sm text-destructive font-medium">
+                        {clashes.clashes.length} clash(es) detected
+                      </p>
+
+                      <div className="space-y-2">
+                        {clashes.clashes.map((clash: any) => (
+                          <div key={clash.id} className="rounded-md border border-border bg-secondary/50 p-3">
+                            <p className="text-sm font-medium">{clash.title}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {clash.dept} &middot; ₹{(clash.cost / 1000000).toFixed(1)}L
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {riskScore && (
+                        <div className="rounded-md border border-border bg-secondary/50 p-4 space-y-2">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
+                            <p className="text-sm font-medium">AI Risk Assessment</p>
+                          </div>
+                          <div className="grid grid-cols-3 gap-3 text-xs">
+                            <div>
+                              <p className="text-muted-foreground">Risk Score</p>
+                              <p className="text-base font-semibold text-destructive mt-0.5">{riskScore.risk_score}/10</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Potential Waste</p>
+                              <p className="text-base font-semibold text-orange-600 mt-0.5">₹{(riskScore.waste_inr / 1000000).toFixed(1)}L</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Recommendation</p>
+                              <Badge variant="secondary" className="mt-1 capitalize">{riskScore.recommendation}</Badge>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <Button onClick={generateNIT} variant="destructive" className="w-full">
+                        <FileDown className="mr-2 h-4 w-4" aria-hidden="true" />
+                        Generate Combined NIT &amp; Download PDF
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="text-sm text-emerald-600 flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                      No conflicts detected — safe to proceed
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
             )}
           </div>
         </main>

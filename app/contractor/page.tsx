@@ -2,44 +2,25 @@
 
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { Clock, IndianRupee, Medal, Trophy } from 'lucide-react';
 
 export default function ContractorPage() {
   const contractors = [
-    {
-      id: 1,
-      name: 'BuildCorp India Ltd',
-      completed: 12,
-      avgDelay: 3,
-      penalty: 125000,
-    },
-    {
-      id: 2,
-      name: 'Infrastructure Plus',
-      completed: 18,
-      avgDelay: 1,
-      penalty: 45000,
-    },
-    {
-      id: 3,
-      name: 'Highway Systems',
-      completed: 8,
-      avgDelay: 7,
-      penalty: 280000,
-    },
-    {
-      id: 4,
-      name: 'Urban Development Co',
-      completed: 15,
-      avgDelay: 2,
-      penalty: 85000,
-    },
-    {
-      id: 5,
-      name: 'Metro Engineering',
-      completed: 20,
-      avgDelay: 0,
-      penalty: 0,
-    },
+    { id: 1, name: 'BuildCorp India Ltd', completed: 12, avgDelay: 3, penalty: 125000 },
+    { id: 2, name: 'Infrastructure Plus', completed: 18, avgDelay: 1, penalty: 45000 },
+    { id: 3, name: 'Highway Systems', completed: 8, avgDelay: 7, penalty: 280000 },
+    { id: 4, name: 'Urban Development Co', completed: 15, avgDelay: 2, penalty: 85000 },
+    { id: 5, name: 'Metro Engineering', completed: 20, avgDelay: 0, penalty: 0 },
   ];
 
   const getScore = (completed: number, delay: number) => {
@@ -50,94 +31,115 @@ export default function ContractorPage() {
     (a, b) => getScore(b.completed, b.avgDelay) - getScore(a.completed, a.avgDelay)
   );
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-blue-900">
-      <Navbar />
-      
-      <div className="flex">
-        <Sidebar />
-        
-        <main className="flex-1 p-8">
-          <h1 className="text-3xl font-bold text-white mb-8">Contractor Performance Scorecard</h1>
+  const avgDelay = (sortedContractors.reduce((sum, c) => sum + c.avgDelay, 0) / sortedContractors.length).toFixed(1);
+  const totalPenalties = sortedContractors.reduce((sum, c) => sum + c.penalty, 0);
 
-          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left py-4 px-4 text-gray-300 font-semibold">Rank</th>
-                    <th className="text-left py-4 px-4 text-gray-300 font-semibold">Contractor Name</th>
-                    <th className="text-center py-4 px-4 text-gray-300 font-semibold">Projects Completed</th>
-                    <th className="text-center py-4 px-4 text-gray-300 font-semibold">Avg Delay (days)</th>
-                    <th className="text-right py-4 px-4 text-gray-300 font-semibold">Penalties</th>
-                    <th className="text-center py-4 px-4 text-gray-300 font-semibold">Score</th>
-                  </tr>
-                </thead>
-                <tbody>
+  const rankIcon = (idx: number) => {
+    if (idx === 0) return <Medal className="h-4 w-4 text-yellow-500" aria-label="Rank 1" />;
+    if (idx === 1) return <Medal className="h-4 w-4 text-gray-500" aria-label="Rank 2" />;
+    if (idx === 2) return <Medal className="h-4 w-4 text-orange-500" aria-label="Rank 3" />;
+    return <span className="text-xs text-muted-foreground w-4 text-center">{idx + 1}</span>;
+  };
+
+  const scoreColor = (score: number) => {
+    if (score >= 80) return 'text-emerald-600';
+    if (score >= 60) return 'text-yellow-600';
+    return 'text-destructive';
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <Navbar />
+
+      <div className="flex flex-1">
+        <Sidebar />
+
+        <main className="flex-1 p-6 lg:p-8 space-y-6 overflow-auto">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Contractor Performance</h1>
+            <p className="text-sm text-muted-foreground mt-1">Scorecard and rankings based on project delivery performance</p>
+          </div>
+
+          {/* Summary cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Card className="bg-card border-border">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-muted-foreground">Top Performer</p>
+                  <Trophy className="h-4 w-4 text-yellow-500" aria-hidden="true" />
+                </div>
+                <p className="text-lg font-semibold mt-2">{sortedContractors[0].name}</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-muted-foreground">Avg. Delay</p>
+                  <Clock className="h-4 w-4 text-orange-500" aria-hidden="true" />
+                </div>
+                <p className="text-lg font-semibold mt-2">{avgDelay} days</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-muted-foreground">Total Penalties</p>
+                  <IndianRupee className="h-4 w-4 text-primary" aria-hidden="true" />
+                </div>
+                <p className="text-lg font-semibold mt-2">₹{(totalPenalties / 100000).toFixed(1)}L</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Table */}
+          <Card className="bg-card border-border">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead className="w-12">Rank</TableHead>
+                    <TableHead>Contractor</TableHead>
+                    <TableHead className="text-center">Completed</TableHead>
+                    <TableHead className="text-center">Avg Delay</TableHead>
+                    <TableHead className="text-right">Penalties</TableHead>
+                    <TableHead className="w-40">Score</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {sortedContractors.map((contractor, idx) => {
                     const score = getScore(contractor.completed, contractor.avgDelay);
-                    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '  ';
-                    
                     return (
-                      <tr key={contractor.id} className="border-b border-white/10 hover:bg-white/5 transition">
-                        <td className="py-4 px-4 text-white font-bold text-lg">{medal}</td>
-                        <td className="py-4 px-4 text-white font-medium">{contractor.name}</td>
-                        <td className="py-4 px-4 text-center text-gray-300">{contractor.completed}</td>
-                        <td className="py-4 px-4 text-center text-gray-300">{contractor.avgDelay}</td>
-                        <td className="py-4 px-4 text-right text-gray-300">
+                      <TableRow key={contractor.id} className="border-border">
+                        <TableCell>
+                          <div className="flex items-center justify-center">
+                            {rankIcon(idx)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">{contractor.name}</TableCell>
+                        <TableCell className="text-center text-muted-foreground">{contractor.completed}</TableCell>
+                        <TableCell className="text-center text-muted-foreground">
+                          {contractor.avgDelay} {contractor.avgDelay === 1 ? 'day' : 'days'}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
                           ₹{contractor.penalty.toLocaleString('en-IN')}
-                        </td>
-                        <td className="py-4 px-4 text-center">
-                          <div className="flex items-center justify-center space-x-2">
-                            <div className="w-24 bg-white/10 rounded-full h-2">
-                              <div
-                                className={`h-full rounded-full transition ${
-                                  score >= 80 ? 'bg-green-500' :
-                                  score >= 60 ? 'bg-yellow-500' :
-                                  'bg-red-500'
-                                }`}
-                                style={{ width: `${score}%` }}
-                              />
-                            </div>
-                            <span className={`font-bold text-sm ${
-                              score >= 80 ? 'text-green-400' :
-                              score >= 60 ? 'text-yellow-400' :
-                              'text-red-400'
-                            }`}>
-                              {score.toFixed(0)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Progress value={score} className="h-1.5 flex-1" />
+                            <span className={`text-xs font-semibold w-7 text-right ${scoreColor(score)}`}>
+                              {score}
                             </span>
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 pt-8 border-t border-white/10">
-              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                <p className="text-sm text-gray-300">🥇 Top Performer</p>
-                <p className="text-lg font-bold text-green-400 mt-1">
-                  {sortedContractors[0].name}
-                </p>
-              </div>
-
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                <p className="text-sm text-gray-300">⚠️ Average Delay</p>
-                <p className="text-lg font-bold text-yellow-400 mt-1">
-                  {(sortedContractors.reduce((sum, c) => sum + c.avgDelay, 0) / sortedContractors.length).toFixed(1)} days
-                </p>
-              </div>
-
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                <p className="text-sm text-gray-300">💰 Total Penalties</p>
-                <p className="text-lg font-bold text-blue-400 mt-1">
-                  ₹{(sortedContractors.reduce((sum, c) => sum + c.penalty, 0) / 100000).toFixed(1)}L
-                </p>
-              </div>
-            </div>
-          </div>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </main>
       </div>
     </div>
