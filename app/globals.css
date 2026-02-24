@@ -65,9 +65,11 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* ── Light-first enterprise theme — AtomAI exact match ── */
+/* ── Light-first enterprise theme with dark mode support ── */
 :root {
   --radius: 0.625rem;
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Times New Roman", serif;
   --background: oklch(1 0 0);
   --foreground: oklch(0.18 0.01 240);
   --card: oklch(1 0 0);
@@ -108,13 +110,62 @@
   --impact-text: oklch(0.55 0.16 178);
   --footer-bg: oklch(0.19 0.025 240);
   --footer-fg: oklch(0.62 0.01 240);
+
+  /* Smooth theme transitions */
+  color-scheme: light;
 }
 
-/* Scrollbar */
+/* ── Dark theme with WCAG 2.2 AA contrast ratios ── */
+.dark {
+  --background: oklch(0.12 0.01 240);
+  --foreground: oklch(0.95 0.01 240);
+  --card: oklch(0.18 0.01 240);
+  --card-foreground: oklch(0.95 0.01 240);
+  --popover: oklch(0.18 0.01 240);
+  --popover-foreground: oklch(0.95 0.01 240);
+  /* Teal primary — brightened for dark mode contrast */
+  --primary: oklch(0.72 0.15 178);
+  --primary-foreground: oklch(0.12 0.01 240);
+  --secondary: oklch(0.22 0.01 240);
+  --secondary-foreground: oklch(0.88 0.01 240);
+  --muted: oklch(0.28 0.01 240);
+  --muted-foreground: oklch(0.68 0.01 240);
+  --accent: oklch(0.22 0.01 240);
+  --accent-foreground: oklch(0.88 0.01 240);
+  --destructive: oklch(0.68 0.18 25);
+  --border: oklch(0.25 0.01 240);
+  --input: oklch(0.22 0.01 240);
+  --ring: oklch(0.72 0.15 178);
+  --chart-1: oklch(0.72 0.15 178);
+  --chart-2: oklch(0.68 0.16 160);
+  --chart-3: oklch(0.72 0.16 80);
+  --chart-4: oklch(0.62 0.20 300);
+  --chart-5: oklch(0.68 0.18 25);
+  --sidebar: oklch(0.15 0.01 240);
+  --sidebar-foreground: oklch(0.95 0.01 240);
+  --sidebar-primary: oklch(0.72 0.15 178);
+  --sidebar-primary-foreground: oklch(0.12 0.01 240);
+  --sidebar-accent: oklch(0.22 0.01 240);
+  --sidebar-accent-foreground: oklch(0.95 0.01 240);
+  --sidebar-border: oklch(0.25 0.01 240);
+  --sidebar-ring: oklch(0.72 0.15 178);
+
+  color-scheme: dark;
+}
+
+/* Scrollbar — light and dark mode aware */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: oklch(0.82 0.01 260); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: oklch(0.82 0.01 260); border-radius: 3px; transition: background 200ms ease; }
 ::-webkit-scrollbar-thumb:hover { background: oklch(0.72 0.02 260); }
+
+.dark ::-webkit-scrollbar-thumb { background: oklch(0.35 0.01 240); }
+.dark ::-webkit-scrollbar-thumb:hover { background: oklch(0.45 0.02 240); }
+
+/* Smooth theme transition */
+html {
+  transition: background-color 200ms ease, color 200ms ease;
+}
 
 /* Risk pulse animation */
 @keyframes pulse-ring {
@@ -126,9 +177,16 @@
   animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Gradient text — teal → violet, matching AtomAI exact palette */
+/* Gradient text — teal → violet, with dark mode support */
 .text-gradient {
   background: linear-gradient(90deg, #00C9A7 0%, #7C3AED 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .text-gradient {
+  background: linear-gradient(90deg, #00E5C3 0%, #A78BFA 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -139,14 +197,26 @@
   background-color: oklch(0.96 0.04 178);
 }
 
+.dark .bg-impact {
+  background-color: oklch(0.22 0.03 178);
+}
+
 /* Footer dark navy */
 .bg-footer {
   background-color: oklch(0.19 0.025 240);
 }
 
+.dark .bg-footer {
+  background-color: oklch(0.1 0.01 240);
+}
+
 /* CTA section gradient */
 .bg-cta-gradient {
   background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+}
+
+.dark .bg-cta-gradient {
+  background: linear-gradient(135deg, #3B82F6 0%, #A78BFA 100%);
 }
 
 /* Section label — small teal label above headings */
@@ -156,6 +226,10 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: #00C9A7;
+}
+
+.dark .section-label {
+  color: #00E5C3;
 }
 
 /* Smooth section fade-in */
@@ -177,5 +251,13 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
   }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
 }

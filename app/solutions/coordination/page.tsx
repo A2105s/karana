@@ -1,5 +1,7 @@
 'use client';
 
+import { useI18n } from '@/components/LanguageProvider';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { AlertTriangle, ArrowRight, Brain, CheckCircle2, Map, MapPin, Zap } from 'lucide-react';
 import Link from 'next/link';
 
@@ -58,11 +60,12 @@ const WHY_FEATURES = [
 ];
 
 export default function CoordinationSolution() {
+  const { t } = useI18n();
 
   return (
     <div className="flex min-h-screen flex-col bg-white text-[#1a2433]">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:px-4 focus:py-2 focus:bg-[#00C9A7] focus:text-white">
-        Skip to main content
+        {t('Skip to main content')}
       </a>
 
       {/* NAVBAR */}
@@ -73,7 +76,7 @@ export default function CoordinationSolution() {
               <Zap className="h-4 w-4 text-white" aria-hidden="true" />
             </div>
             <span className="text-[15px] font-bold text-[#1a2433]">
-              Karana<span className="text-[10px] font-normal text-gray-400 ml-1">Solutions</span>
+              {t('Karana')}<span className="text-[10px] font-normal text-gray-400 ml-1">{t('Solutions')}</span>
             </span>
           </Link>
 
@@ -88,15 +91,18 @@ export default function CoordinationSolution() {
                     : 'text-gray-500 hover:text-[#1a2433] hover:bg-gray-50'
                 }`}
               >
-                {link.label}
+                {t(link.label)}
               </Link>
             ))}
           </nav>
 
           <Link href="/dashboard" className="hidden sm:inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
             style={{ background: 'linear-gradient(135deg, #00C9A7 0%, #7C3AED 100%)' }}>
-            Get Started
+            {t('Get Started')}
           </Link>
+          <div className="hidden md:flex">
+            <LanguageSwitcher />
+          </div>
         </div>
       </header>
 
@@ -105,20 +111,20 @@ export default function CoordinationSolution() {
         <section className="relative overflow-hidden bg-white">
           <div className="pointer-events-none absolute inset-0 -z-10" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,201,167,0.08) 0%, transparent 70%)' }} aria-hidden="true" />
           <div className="mx-auto max-w-6xl px-4 lg:px-8 pt-20 pb-12 text-center">
-            <p className="section-label mb-4">Coordination & Clash Detection</p>
+            <p className="section-label mb-4">{t('Coordination & Clash Detection')}</p>
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl leading-[1.12] text-[#1a2433]">
-              Multi-Department<br /><span className="text-gradient">Coordination Effortless</span><br />With Karana
+              {t('Multi-Department')}<br /><span className="text-gradient">{t('Coordination Effortless')}</span><br />{t('With Karana')}
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-[15px] text-gray-500 leading-relaxed">
-              Stop clash-driven delays. Get real-time visibility across all 6+ departments, AI-powered clash detection, and instant conflict resolution—all on one platform. From Gwalior to any city.
+              {t('Stop clash-driven delays. Get real-time visibility across all 6+ departments, AI-powered clash detection, and instant conflict resolution—all on one platform. From Gwalior to any city.')}
             </p>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
                 style={{ background: 'linear-gradient(135deg, #00C9A7 0%, #7C3AED 100%)' }}>
-                See It Live<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                {t('See It Live')}<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
               </Link>
               <Link href="/" className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-6 py-2.5 text-sm font-semibold text-[#1a2433] hover:bg-gray-50 transition-colors">
-                Back to Home
+                {t('Back to Home')}
               </Link>
             </div>
           </div>
@@ -128,12 +134,12 @@ export default function CoordinationSolution() {
         <section className="bg-white border-y border-gray-100">
           <div className="mx-auto max-w-6xl px-4 lg:px-8 py-16 lg:py-20">
             <div className="mb-8 text-center">
-              <p className="section-label mb-3">How Coordination Works</p>
+              <p className="section-label mb-3">{t('How Coordination Works')}</p>
               <h2 className="text-3xl font-extrabold tracking-tight lg:text-4xl text-[#1a2433]">
-                <span className="text-gradient">Instant Visibility. Zero Clashes.</span>
+                <span className="text-gradient">{t('Instant Visibility. Zero Clashes.')}</span>
               </h2>
               <p className="mx-auto mt-3 max-w-lg text-sm text-gray-500 leading-relaxed">
-                Real-time spatial analysis identifies conflicts in seconds—before they lock up your budget.
+                {t('Real-time spatial analysis identifies conflicts in seconds—before they lock up your budget.')}
               </p>
             </div>
 
@@ -189,8 +195,8 @@ export default function CoordinationSolution() {
                   <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: card.iconBg }} aria-hidden="true">
                     <div style={{ color: card.iconColor }}>{card.icon}</div>
                   </div>
-                  <h3 className="text-[13.5px] font-bold text-[#1a2433] mb-1.5">{card.title}</h3>
-                  <p className={`text-[12.5px] text-gray-500 leading-relaxed flex-1`}>{card.body}</p>
+                      <h3 className="text-[13.5px] font-bold text-[#1a2433] mb-1.5">{t(card.title)}</h3>
+                      <p className={`text-[12.5px] text-gray-500 leading-relaxed flex-1`}>{t(card.body)}</p>
                 </div>
               ))}
             </div>
@@ -201,17 +207,17 @@ export default function CoordinationSolution() {
         <section className="bg-[#FAFAFA] border-y border-gray-100">
           <div className="mx-auto max-w-6xl px-4 lg:px-8 py-16 lg:py-20">
             <div className="mb-10 text-center">
-              <p className="section-label mb-3">Impact at Scale</p>
+              <p className="section-label mb-3">{t('Impact at Scale')}</p>
               <h2 className="text-3xl font-extrabold tracking-tight lg:text-4xl text-[#1a2433]">
-                Coordination that saves <span className="text-gradient">time, money, and headaches</span>
+                {t('Coordination that saves')} <span className="text-gradient">{t('time, money, and headaches')}</span>
               </h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {IMPACT_STATS.map((stat) => (
                 <div key={stat.label} className="rounded-2xl p-8 text-center" style={{ backgroundColor: 'rgba(0,201,167,0.10)' }}>
                   <p className="text-5xl font-extrabold tracking-tight lg:text-6xl" style={{ color: '#00A88E' }}>{stat.value}</p>
-                  <p className="mt-3 text-sm font-semibold text-[#1a2433]">{stat.label}</p>
-                  <p className="mt-1.5 text-xs text-gray-500">{stat.sub}</p>
+                  <p className="mt-3 text-sm font-semibold text-[#1a2433]">{t(stat.label)}</p>
+                  <p className="mt-1.5 text-xs text-gray-500">{t(stat.sub)}</p>
                 </div>
               ))}
             </div>
@@ -222,9 +228,9 @@ export default function CoordinationSolution() {
         <section className="bg-white">
           <div className="mx-auto max-w-6xl px-4 lg:px-8 py-16 lg:py-20">
             <div className="mb-10 text-center">
-              <p className="section-label mb-3">Why Choose Coordination</p>
+              <p className="section-label mb-3">{t('Why Choose Coordination')}</p>
               <h2 className="text-3xl font-extrabold tracking-tight lg:text-4xl text-[#1a2433] mb-12">
-                Built for <span className="text-gradient">Indian infrastructure</span> from the ground up
+                {t('Built for')} <span className="text-gradient">{t('Indian infrastructure')}</span> {t('from the ground up')}
               </h2>
             </div>
 
@@ -235,7 +241,7 @@ export default function CoordinationSolution() {
                     <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={{ background: 'rgba(0,201,167,0.12)' }} aria-hidden="true">
                       <div style={{ color: '#00C9A7' }}>{f.icon}</div>
                     </div>
-                    <p className="text-[13.5px] text-gray-600 leading-relaxed">{f.text}</p>
+                    <p className="text-[13.5px] text-gray-600 leading-relaxed">{t(f.text)}</p>
                   </div>
                 ))}
               </div>
@@ -249,8 +255,8 @@ export default function CoordinationSolution() {
                 ].map((item, i) => (
                   <div key={i} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
                     <div className="text-3xl mb-2">{item.icon}</div>
-                    <h3 className="text-[12.5px] font-bold text-[#1a2433] mb-1">{item.label}</h3>
-                    <p className="text-[11.5px] text-gray-500 leading-relaxed">{item.sub}</p>
+                    <h3 className="text-[12.5px] font-bold text-[#1a2433] mb-1">{t(item.label)}</h3>
+                    <p className="text-[11.5px] text-gray-500 leading-relaxed">{t(item.sub)}</p>
                   </div>
                 ))}
               </div>
@@ -262,14 +268,14 @@ export default function CoordinationSolution() {
         <section aria-labelledby="cta-heading" style={{ background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)' }}>
           <div className="mx-auto max-w-6xl px-4 lg:px-8 py-16 lg:py-20 text-center">
             <h2 id="cta-heading" className="text-3xl font-extrabold tracking-tight text-white lg:text-4xl">
-              See Clash Detection in Action<br />Today
+              {t('See Clash Detection in Action')}<br />{t('Today')}
             </h2>
             <p className="mx-auto mt-4 max-w-md text-[14.5px] text-white/75 leading-relaxed">
-              Get real-time clash detection, automated conflict resolution, and multi-department coordination on one platform.
+              {t('Get real-time clash detection, automated conflict resolution, and multi-department coordination on one platform.')}
             </p>
             <div className="mt-8 flex items-center justify-center gap-3">
               <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-lg bg-white px-7 py-3 text-sm font-semibold text-[#2563EB] hover:bg-blue-50 transition-colors">
-                Open Platform<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                {t('Open Platform')}<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
               </Link>
             </div>
           </div>
@@ -281,7 +287,7 @@ export default function CoordinationSolution() {
         <div className="mx-auto max-w-6xl px-4 lg:px-8 pt-12 pb-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pb-10 border-b border-white/10">
             <div>
-              <h3 className="text-[12px] font-semibold text-white mb-3 uppercase tracking-wider">Solutions</h3>
+              <h3 className="text-[12px] font-semibold text-white mb-3 uppercase tracking-wider">{t('Solutions')}</h3>
               <ul className="space-y-2">
                 {[
                   { label: 'Coordination', href: '/solutions/coordination' },
@@ -291,7 +297,7 @@ export default function CoordinationSolution() {
                 ].map((link) => (
                   <li key={link.label}>
                     <Link href={link.href} className="text-[12.5px] transition-colors hover:text-white" style={{ color: '#8494a9' }}>
-                      {link.label}
+                      {t(link.label)}
                     </Link>
                   </li>
                 ))}
@@ -299,7 +305,7 @@ export default function CoordinationSolution() {
             </div>
 
             <div>
-              <h3 className="text-[12px] font-semibold text-white mb-3 uppercase tracking-wider">Platform</h3>
+              <h3 className="text-[12px] font-semibold text-white mb-3 uppercase tracking-wider">{t('Platform')}</h3>
               <ul className="space-y-2">
                 {[
                   { label: 'Dashboard', href: '/dashboard' },
@@ -309,7 +315,7 @@ export default function CoordinationSolution() {
                 ].map((link) => (
                   <li key={link.label}>
                     <Link href={link.href} className="text-[12.5px] transition-colors hover:text-white" style={{ color: '#8494a9' }}>
-                      {link.label}
+                      {t(link.label)}
                     </Link>
                   </li>
                 ))}
@@ -317,7 +323,7 @@ export default function CoordinationSolution() {
             </div>
 
             <div>
-              <h3 className="text-[12px] font-semibold text-white mb-3 uppercase tracking-wider">Company</h3>
+              <h3 className="text-[12px] font-semibold text-white mb-3 uppercase tracking-wider">{t('Company')}</h3>
               <ul className="space-y-2">
                 {[
                   { label: 'About', href: '#' },
@@ -326,7 +332,7 @@ export default function CoordinationSolution() {
                 ].map((link) => (
                   <li key={link.label}>
                     <Link href={link.href} className="text-[12.5px] transition-colors hover:text-white" style={{ color: '#8494a9' }}>
-                      {link.label}
+                      {t(link.label)}
                     </Link>
                   </li>
                 ))}
@@ -334,7 +340,7 @@ export default function CoordinationSolution() {
             </div>
 
             <div>
-              <h3 className="text-[12px] font-semibold text-white mb-3 uppercase tracking-wider">Legal</h3>
+              <h3 className="text-[12px] font-semibold text-white mb-3 uppercase tracking-wider">{t('Legal')}</h3>
               <ul className="space-y-2">
                 {[
                   { label: 'Privacy', href: '#' },
@@ -342,7 +348,7 @@ export default function CoordinationSolution() {
                 ].map((link) => (
                   <li key={link.label}>
                     <Link href={link.href} className="text-[12.5px] transition-colors hover:text-white" style={{ color: '#8494a9' }}>
-                      {link.label}
+                      {t(link.label)}
                     </Link>
                   </li>
                 ))}
@@ -352,7 +358,7 @@ export default function CoordinationSolution() {
 
           <div className="pt-6 text-center">
             <p className="text-[11.5px]" style={{ color: '#8494a9' }}>
-              © 2026 Karana Platform · Gwalior, Madhya Pradesh · Built for PM GatiShakti
+              {t('© 2026 Karana Platform · Gwalior, Madhya Pradesh · Built for PM GatiShakti')}
             </p>
           </div>
         </div>

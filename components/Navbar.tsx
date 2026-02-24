@@ -1,6 +1,9 @@
 'use client';
 
+import { useI18n } from '@/components/LanguageProvider';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import SidebarNav from '@/components/Sidebar';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import {
     Select,
@@ -16,6 +19,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 export default function Navbar() {
+  const { t } = useI18n();
   const [role, setRole] = useState('commissioner');
 
   return (
@@ -29,7 +33,7 @@ export default function Navbar() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0">
-            <SheetTitle className="sr-only">Navigation</SheetTitle>
+            <SheetTitle className="sr-only">{t('Navigation')}</SheetTitle>
             <SidebarNav />
           </SheetContent>
         </Sheet>
@@ -40,7 +44,7 @@ export default function Navbar() {
             <Zap className="h-4 w-4 text-primary-foreground" aria-hidden="true" />
           </div>
           <span className="font-semibold text-base tracking-tight group-hover:text-primary transition-colors">
-            Karana
+            {t('Karana')}
           </span>
         </Link>
 
@@ -49,18 +53,20 @@ export default function Navbar() {
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Role selector */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground hidden sm:inline">Role</span>
+        {/* Role selector and theme toggle */}
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+          <ThemeToggle />
+          <span className="text-xs text-muted-foreground hidden sm:inline ml-2">{t('Role')}</span>
           <Select value={role} onValueChange={setRole}>
-            <SelectTrigger className="w-[160px] h-8 text-xs bg-secondary border-border" aria-label="Select role">
+            <SelectTrigger className="w-[160px] h-8 text-xs bg-secondary border-border" aria-label={t('Select role')}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="commissioner">Commissioner</SelectItem>
-              <SelectItem value="dept-head">Dept Head</SelectItem>
-              <SelectItem value="field-engineer">Field Engineer</SelectItem>
-              <SelectItem value="tender-officer">Tender Officer</SelectItem>
+              <SelectItem value="commissioner">{t('Commissioner')}</SelectItem>
+              <SelectItem value="dept-head">{t('Dept Head')}</SelectItem>
+              <SelectItem value="field-engineer">{t('Field Engineer')}</SelectItem>
+              <SelectItem value="tender-officer">{t('Tender Officer')}</SelectItem>
             </SelectContent>
           </Select>
         </div>

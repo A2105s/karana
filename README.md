@@ -14,6 +14,7 @@ Karana is a hackathon MVP platform designed for Gwalior, Madhya Pradesh, India. 
 
 - **🗺️ Live Conflict Map**: Real-time visualization of all infrastructure projects with clash detection
 - **🤖 AI Risk Scoring**: Groq-powered analysis of financial waste and clash severity
+- **🧠 AI Monitoring Suite**: Gemini-powered monitoring, coordination, triggering, and map intelligence
 - **📄 Auto-Generated NITs**: AI-created Notice Inviting Tenders for merged projects
 - **📱 AR Field Warnings**: AR camera overlay with real-time geolocation alerts
 - **🎤 Voice Queries**: Hindi language support for field engineers
@@ -44,11 +45,22 @@ Create `.env.local`:
 
 ```env
 GROQ_API_KEY=your_groq_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
+# i18n uses static JSON locales by default (no API needed)
+# Optional: use LibreTranslate by wiring /api/translate in custom flows
+LIBRETRANSLATE_URL=http://localhost:5000
+NTFY_SERVER=https://ntfy.sh
+NTFY_TOPIC=karana-demo-alerts
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=your_resend_api_key_here
+EMAIL_FROM=alerts@your-domain.example
+EMAIL_TO=your_recipient_email
 NEXT_PUBLIC_SUPABASE_URL=optional
 NEXT_PUBLIC_SUPABASE_ANON_KEY=optional
 ```
 
 Get your GROQ_API_KEY from [console.groq.com](https://console.groq.com)
+Get your GEMINI_API_KEY from [Google AI Studio](https://aistudio.google.com/)
 
 ### 3. Run Development Server
 
@@ -153,6 +165,33 @@ Groq AI risk analysis
 ### POST /api/generate-nit
 Groq AI NIT document generator
 
+### POST /api/ai-monitoring
+Gemini AI monitoring insights
+
+### POST /api/ai-coordination
+Gemini AI coordination plan
+
+### POST /api/ai-triggering
+Gemini AI triggering response
+
+### POST /api/map-monitoring
+Gemini map monitoring insights
+
+### POST /api/map-layouting
+Gemini map layout recommendations
+
+### POST /api/ai-decision
+Gemini AI decisioning for clash actions
+
+### POST /api/translate
+Translation proxy (optional, LibreTranslate)
+
+### POST /api/notify
+Push notification via ntfy.sh
+
+### POST /api/email
+Email updates via Resend
+
 ## 🎨 Design
 
 - **Theme**: Dark glassmorphic (Apple Vision Pro inspired)
@@ -195,6 +234,21 @@ Groq AI NIT document generator
 **Groq calls failing?**
 - Verify `.env.local` has `GROQ_API_KEY`
 - API returns fallback response if key missing
+
+**Gemini calls failing?**
+- Verify `.env.local` has `GEMINI_API_KEY`
+- Ensure billing/project access is enabled in Google AI Studio
+
+**Translations failing?**
+- Static locales live in `data/locales/*.json`
+- For LibreTranslate (optional), set `LIBRETRANSLATE_URL`
+
+**Push notifications not sent?**
+- Set `NTFY_TOPIC` (topic name) and `NTFY_SERVER` (default https://ntfy.sh)
+
+**Email updates not sent?**
+- Verify `RESEND_API_KEY`, `EMAIL_FROM`, and `EMAIL_TO`
+- Ensure `EMAIL_PROVIDER=resend`
 
 **Build errors?**
 - Clear `.next` folder: `rm -rf .next`

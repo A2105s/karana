@@ -1,5 +1,6 @@
 'use client';
 
+import { useI18n } from '@/components/LanguageProvider';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,6 +16,7 @@ import {
 import { Clock, IndianRupee, Medal, Trophy } from 'lucide-react';
 
 export default function ContractorPage() {
+  const { t } = useI18n();
   const contractors = [
     { id: 1, name: 'BuildCorp India Ltd', completed: 12, avgDelay: 3, penalty: 125000 },
     { id: 2, name: 'Infrastructure Plus', completed: 18, avgDelay: 1, penalty: 45000 },
@@ -35,9 +37,9 @@ export default function ContractorPage() {
   const totalPenalties = sortedContractors.reduce((sum, c) => sum + c.penalty, 0);
 
   const rankIcon = (idx: number) => {
-    if (idx === 0) return <Medal className="h-4 w-4 text-yellow-500" aria-label="Rank 1" />;
-    if (idx === 1) return <Medal className="h-4 w-4 text-gray-500" aria-label="Rank 2" />;
-    if (idx === 2) return <Medal className="h-4 w-4 text-orange-500" aria-label="Rank 3" />;
+    if (idx === 0) return <Medal className="h-4 w-4 text-yellow-500" aria-label={t('Rank 1')} />;
+    if (idx === 1) return <Medal className="h-4 w-4 text-gray-500" aria-label={t('Rank 2')} />;
+    if (idx === 2) return <Medal className="h-4 w-4 text-orange-500" aria-label={t('Rank 3')} />;
     return <span className="text-xs text-muted-foreground w-4 text-center">{idx + 1}</span>;
   };
 
@@ -56,8 +58,8 @@ export default function ContractorPage() {
 
         <main className="flex-1 p-6 lg:p-8 space-y-6 overflow-auto">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Contractor Performance</h1>
-            <p className="text-sm text-muted-foreground mt-1">Scorecard and rankings based on project delivery performance</p>
+            <h1 className="text-2xl font-semibold tracking-tight">{t('Contractor Performance')}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{t('Scorecard and rankings based on project delivery performance')}</p>
           </div>
 
           {/* Summary cards */}
@@ -65,7 +67,7 @@ export default function ContractorPage() {
             <Card className="bg-card border-border">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-muted-foreground">Top Performer</p>
+                  <p className="text-xs font-medium text-muted-foreground">{t('Top Performer')}</p>
                   <Trophy className="h-4 w-4 text-yellow-500" aria-hidden="true" />
                 </div>
                 <p className="text-lg font-semibold mt-2">{sortedContractors[0].name}</p>
@@ -75,7 +77,7 @@ export default function ContractorPage() {
             <Card className="bg-card border-border">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-muted-foreground">Avg. Delay</p>
+                  <p className="text-xs font-medium text-muted-foreground">{t('Avg. Delay')}</p>
                   <Clock className="h-4 w-4 text-orange-500" aria-hidden="true" />
                 </div>
                 <p className="text-lg font-semibold mt-2">{avgDelay} days</p>
@@ -85,7 +87,7 @@ export default function ContractorPage() {
             <Card className="bg-card border-border">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-muted-foreground">Total Penalties</p>
+                  <p className="text-xs font-medium text-muted-foreground">{t('Total Penalties')}</p>
                   <IndianRupee className="h-4 w-4 text-primary" aria-hidden="true" />
                 </div>
                 <p className="text-lg font-semibold mt-2">₹{(totalPenalties / 100000).toFixed(1)}L</p>
@@ -99,12 +101,12 @@ export default function ContractorPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border hover:bg-transparent">
-                    <TableHead className="w-12">Rank</TableHead>
-                    <TableHead>Contractor</TableHead>
-                    <TableHead className="text-center">Completed</TableHead>
-                    <TableHead className="text-center">Avg Delay</TableHead>
-                    <TableHead className="text-right">Penalties</TableHead>
-                    <TableHead className="w-40">Score</TableHead>
+                    <TableHead className="w-12">{t('Rank')}</TableHead>
+                    <TableHead>{t('Contractor')}</TableHead>
+                    <TableHead className="text-center">{t('Completed')}</TableHead>
+                    <TableHead className="text-center">{t('Avg Delay')}</TableHead>
+                    <TableHead className="text-right">{t('Penalties')}</TableHead>
+                    <TableHead className="w-40">{t('Score')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -120,7 +122,7 @@ export default function ContractorPage() {
                         <TableCell className="font-medium">{contractor.name}</TableCell>
                         <TableCell className="text-center text-muted-foreground">{contractor.completed}</TableCell>
                         <TableCell className="text-center text-muted-foreground">
-                          {contractor.avgDelay} {contractor.avgDelay === 1 ? 'day' : 'days'}
+                          {contractor.avgDelay} {contractor.avgDelay === 1 ? t('day') : t('days')}
                         </TableCell>
                         <TableCell className="text-right text-muted-foreground">
                           ₹{contractor.penalty.toLocaleString('en-IN')}

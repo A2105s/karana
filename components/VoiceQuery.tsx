@@ -1,17 +1,19 @@
 'use client';
 
+import { useI18n } from '@/components/LanguageProvider';
 import { Button } from '@/components/ui/button';
 import { Mic, Volume2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 export default function VoiceQuery() {
+  const { t } = useI18n();
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const recognitionRef = useRef<any>(null);
 
   const startListening = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert('Speech Recognition not supported');
+      alert(t('Speech Recognition not supported'));
       return;
     }
 
@@ -47,10 +49,10 @@ export default function VoiceQuery() {
         disabled={isListening}
         size="sm"
         variant={isListening ? 'secondary' : 'default'}
-        aria-label={isListening ? 'Listening for voice input' : 'Start voice query'}
+        aria-label={isListening ? t('Listening for voice input') : t('Start voice query')}
       >
         <Mic className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-        {isListening ? 'Listening...' : 'Voice Query'}
+        {isListening ? t('Listening...') : t('Voice Query')}
       </Button>
 
       {transcript && (
@@ -58,10 +60,10 @@ export default function VoiceQuery() {
           onClick={() => speak('यहाँ खतरा है')}
           size="sm"
           variant="destructive"
-          aria-label="Speak warning aloud"
+          aria-label={t('Speak warning aloud')}
         >
           <Volume2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-          Warning
+          {t('Warning')}
         </Button>
       )}
 

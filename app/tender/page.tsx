@@ -1,5 +1,6 @@
 'use client';
 
+import { useI18n } from '@/components/LanguageProvider';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +28,7 @@ import {
 import { useState } from 'react';
 
 export default function TenderPage() {
+  const { t } = useI18n();
   const [formData, setFormData] = useState({
     dept: 'PWD',
     title: '',
@@ -116,7 +118,7 @@ export default function TenderPage() {
       const doc = new jsPDF();
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
-      doc.text('Notice Inviting Tender (NIT)', 20, 20);
+      doc.text(t('Notice Inviting Tender (NIT)'), 20, 20);
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
@@ -138,8 +140,8 @@ export default function TenderPage() {
 
         <main className="flex-1 p-6 lg:p-8 space-y-6 overflow-auto">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">New Tender Submission</h1>
-            <p className="text-sm text-muted-foreground mt-1">Submit a project tender and check for infrastructure clashes</p>
+            <h1 className="text-2xl font-semibold tracking-tight">{t('New Tender Submission')}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{t('Submit a project tender and check for infrastructure clashes')}</p>
           </div>
 
           <div className="max-w-2xl space-y-6">
@@ -149,7 +151,7 @@ export default function TenderPage() {
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="dept">Department</Label>
+                      <Label htmlFor="dept">{t('Department')}</Label>
                       <Select value={formData.dept} onValueChange={(val) => setFormData({ ...formData, dept: val })}>
                         <SelectTrigger id="dept">
                           <SelectValue />
@@ -165,29 +167,29 @@ export default function TenderPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="title">Project Title</Label>
+                      <Label htmlFor="title">{t('Project Title')}</Label>
                       <Input
                         id="title"
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        placeholder="e.g. Road Resurfacing"
+                        placeholder={t('e.g. Road Resurfacing')}
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
+                    <Label htmlFor="location">{t('Location')}</Label>
                     <Input
                       id="location"
                       value={formData.location}
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      placeholder="e.g. MLN Road, Gwalior"
+                      placeholder={t('e.g. MLN Road, Gwalior')}
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="startDate">Start Date</Label>
+                      <Label htmlFor="startDate">{t('Start Date')}</Label>
                       <Input
                         id="startDate"
                         type="date"
@@ -196,7 +198,7 @@ export default function TenderPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="endDate">End Date</Label>
+                      <Label htmlFor="endDate">{t('End Date')}</Label>
                       <Input
                         id="endDate"
                         type="date"
@@ -205,13 +207,13 @@ export default function TenderPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cost">Estimated Cost (₹)</Label>
+                      <Label htmlFor="cost">{t('Estimated Cost (₹)')}</Label>
                       <Input
                         id="cost"
                         type="number"
                         value={formData.cost}
                         onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                        placeholder="0"
+                        placeholder={t('0')}
                       />
                     </div>
                   </div>
@@ -220,12 +222,12 @@ export default function TenderPage() {
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                        Checking for Clashes...
+                        {t('Checking for Clashes...')}
                       </>
                     ) : (
                       <>
                         <Search className="mr-2 h-4 w-4" aria-hidden="true" />
-                        Submit &amp; Check Clashes
+                        {t('Submit & Check Clashes')}
                       </>
                     )}
                   </Button>
@@ -243,14 +245,14 @@ export default function TenderPage() {
                     ) : (
                       <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
                     )}
-                    Clash Analysis Result
+                    {t('Clash Analysis Result')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {clashes.clashes.length > 0 ? (
                     <>
                       <p className="text-sm text-destructive font-medium">
-                        {clashes.clashes.length} clash(es) detected
+                        {t('{count} clash(es) detected', { count: clashes.clashes.length })}
                       </p>
 
                       <div className="space-y-2">
@@ -258,7 +260,7 @@ export default function TenderPage() {
                           <div key={clash.id} className="rounded-md border border-border bg-secondary/50 p-3">
                             <p className="text-sm font-medium">{clash.title}</p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              {clash.dept} &middot; ₹{(clash.cost / 1000000).toFixed(1)}L
+                              {t(clash.dept)} &middot; ₹{(clash.cost / 1000000).toFixed(1)}L
                             </p>
                           </div>
                         ))}
@@ -268,19 +270,19 @@ export default function TenderPage() {
                         <div className="rounded-md border border-border bg-secondary/50 p-4 space-y-2">
                           <div className="flex items-center gap-2 mb-2">
                             <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
-                            <p className="text-sm font-medium">AI Risk Assessment</p>
+                            <p className="text-sm font-medium">{t('AI Risk Assessment')}</p>
                           </div>
                           <div className="grid grid-cols-3 gap-3 text-xs">
                             <div>
-                              <p className="text-muted-foreground">Risk Score</p>
+                              <p className="text-muted-foreground">{t('Risk Score')}</p>
                               <p className="text-base font-semibold text-destructive mt-0.5">{riskScore.risk_score}/10</p>
                             </div>
                             <div>
-                              <p className="text-muted-foreground">Potential Waste</p>
+                              <p className="text-muted-foreground">{t('Potential Waste')}</p>
                               <p className="text-base font-semibold text-orange-600 mt-0.5">₹{(riskScore.waste_inr / 1000000).toFixed(1)}L</p>
                             </div>
                             <div>
-                              <p className="text-muted-foreground">Recommendation</p>
+                              <p className="text-muted-foreground">{t('Recommendation')}</p>
                               <Badge variant="secondary" className="mt-1 capitalize">{riskScore.recommendation}</Badge>
                             </div>
                           </div>
@@ -289,13 +291,13 @@ export default function TenderPage() {
 
                       <Button onClick={generateNIT} variant="destructive" className="w-full">
                         <FileDown className="mr-2 h-4 w-4" aria-hidden="true" />
-                        Generate Combined NIT &amp; Download PDF
+                        {t('Generate Combined NIT & Download PDF')}
                       </Button>
                     </>
                   ) : (
                     <p className="text-sm text-emerald-600 flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                      No conflicts detected — safe to proceed
+                      {t('No conflicts detected — safe to proceed')}
                     </p>
                   )}
                 </CardContent>
