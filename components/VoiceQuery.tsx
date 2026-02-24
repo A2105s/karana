@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 
 export default function VoiceQuery() {
   const [isListening, setIsListening] = useState(false);

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { scoreRisk } from '@/lib/groq';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {

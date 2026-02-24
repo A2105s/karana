@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import mockProjects from '@/data/mockProjects.json';
 import { detectClashes } from '@/lib/clashEngine';
+import { NextRequest, NextResponse } from 'next/server';
 
 interface Project {
   id?: number;

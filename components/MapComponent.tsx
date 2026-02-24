@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, GeoJSON, LayerGroup, Circle } from 'react-leaflet';
-import L from 'leaflet';
 import mockProjects from '@/data/mockProjects.json';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useEffect, useState } from 'react';
+import { Circle, GeoJSON, LayerGroup, MapContainer, TileLayer } from 'react-leaflet';
 
 const deptColors: Record<string, string> = {
   PWD: '#EF4444',
