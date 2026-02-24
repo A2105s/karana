@@ -6,6 +6,7 @@
       "properties": {
         "id": 1,
         "dept": "PWD",
+        "work_type": "ROAD_PAVING",
         "title": "MLN Road Resurfacing",
         "start": "2026-03-01",
         "end": "2026-03-15",
@@ -27,6 +28,7 @@
       "properties": {
         "id": 2,
         "dept": "WATER",
+        "work_type": "SEWER",
         "title": "Sewer Line – MLN Road",
         "start": "2026-03-05",
         "end": "2026-03-20",
@@ -48,6 +50,7 @@
       "properties": {
         "id": 3,
         "dept": "BESCOM",
+        "work_type": "ELECTRICAL",
         "title": "HV Cable – City Centre",
         "start": "2026-03-10",
         "end": "2026-03-18",
@@ -69,6 +72,7 @@
       "properties": {
         "id": 4,
         "dept": "PWD",
+        "work_type": "POTHOLE_REPAIR",
         "title": "Phool Bagh Rd Patch",
         "start": "2026-03-12",
         "end": "2026-03-22",
@@ -90,6 +94,7 @@
       "properties": {
         "id": 5,
         "dept": "MUNICIPAL",
+        "work_type": "FOOTPATH",
         "title": "Drainage – Lashkar Zone",
         "start": "2026-03-08",
         "end": "2026-03-25",
@@ -111,6 +116,7 @@
       "properties": {
         "id": 6,
         "dept": "TELECOM",
+        "work_type": "TELECOM",
         "title": "Fibre Optic – Morar Road",
         "start": "2026-03-03",
         "end": "2026-03-14",
