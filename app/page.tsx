@@ -179,21 +179,21 @@ export default function Home() {
   const toggle = (key: string) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-[#1a2433]">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:px-4 focus:py-2 focus:bg-[#00C9A7] focus:text-white">
         {t('Skip to main content')}
       </a>
 
       {/* NAVBAR */}
       <header className="fixed top-4 left-1/2 z-50 w-[min(1120px,calc(100%-2rem))] -translate-x-1/2">
-        <div className="rounded-full border border-gray-200/80 bg-white/80 px-4 shadow-[0_16px_50px_-24px_rgba(15,23,42,0.5)] backdrop-blur-xl">
+        <div className="rounded-full border border-border bg-background/80 px-4 shadow-lg backdrop-blur-xl">
           <div className="mx-auto flex h-14 items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: 'linear-gradient(135deg, #00C9A7 0%, #7C3AED 100%)' }}>
-                <Zap className="h-4 w-4 text-white" aria-hidden="true" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
+                <Zap className="h-4 w-4 text-primary-foreground" aria-hidden="true" />
               </div>
-              <span className="text-[15px] font-bold text-[#1a2433]">
-                {t('Karana')}<span className="text-[10px] font-normal text-gray-400 ml-1">{t('Solutions')}</span>
+              <span className="text-[15px] font-bold text-foreground">
+                {t('Karana')}<span className="text-[10px] font-normal text-muted-foreground ml-1">{t('Solutions')}</span>
               </span>
             </Link>
 
@@ -202,7 +202,7 @@ export default function Home() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="px-3 py-1.5 text-[13px] font-semibold text-gray-500 hover:text-[#1a2433] transition-colors rounded-full hover:bg-gray-100"
+                  className="px-3 py-1.5 text-[13px] font-semibold text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-accent"
                 >
                   {t(link.label)}
                 </Link>
@@ -214,20 +214,20 @@ export default function Home() {
                 <LanguageSwitcher />
               </div>
               <details className="relative md:hidden">
-                <summary className="list-none cursor-pointer rounded-full border border-gray-200 px-3 py-1.5 text-[12.5px] font-semibold text-[#1a2433] hover:bg-gray-50" aria-label={t('Open navigation menu')}>
+                <summary className="list-none cursor-pointer rounded-full border border-border px-3 py-1.5 text-[12.5px] font-semibold text-foreground hover:bg-accent" aria-label={t('Open navigation menu')}>
                   {t('Menu')}
                 </summary>
-                <div className="absolute right-0 mt-2 w-48 rounded-2xl border border-gray-100 bg-white p-2 shadow-lg">
+                <div className="absolute right-0 mt-2 w-48 rounded-2xl border border-border bg-popover p-2 shadow-lg">
                   {NAV_LINKS.map((link) => (
                     <Link
                       key={link.label}
                       href={link.href}
-                      className="block rounded-lg px-3 py-2 text-[12.5px] font-medium text-gray-600 hover:bg-gray-50 hover:text-[#1a2433]"
+                      className="block rounded-lg px-3 py-2 text-[12.5px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
                     >
                       {t(link.label)}
                     </Link>
                   ))}
-                  <div className="mt-2 border-t border-gray-100 pt-2">
+                  <div className="mt-2 border-t border-border pt-2">
                     <LanguageSwitcher />
                   </div>
                 </div>
@@ -235,8 +235,7 @@ export default function Home() {
 
               <Link
                 href="/dashboard"
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[12.5px] font-semibold text-white transition-opacity hover:opacity-90"
-                style={{ background: 'linear-gradient(135deg, #00C9A7 0%, #7C3AED 100%)' }}
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[12.5px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
               >
                 {t('Get Started')}
               </Link>
