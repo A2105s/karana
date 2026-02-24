@@ -19,7 +19,6 @@ export default function MapComponent() {
     new Set(Object.keys(deptColors))
   );
 
-  // Fix leaflet default icon issue
   useEffect(() => {
     delete (L.Icon.Default.prototype as any)._getIconUrl;
     L.Icon.Default.mergeOptions({
@@ -31,29 +30,33 @@ export default function MapComponent() {
 
   const onEachFeature = (feature: any, layer: any) => {
     const { title, dept, start, end, cost, risk, clash_with } = feature.properties;
-    
+
+    const riskBg = risk === 'HIGH' ? 'background:#fca5a5;color:#991b1b' :
+                   risk === 'MEDIUM' ? 'background:#fde68a;color:#92400e' :
+                   'background:#bbf7d0;color:#166534';
+
+    const clashHtml = clash_with
+      ? `<p style="margin-top:8px;font-size:12px;color:#f87171;font-weight:600">CLASH with ${clash_with}</p>`
+      : `<p style="margin-top:8px;font-size:12px;color:#4ade80">No conflicts</p>`;
+
     const popupContent = `
-      <div class="text-sm font-sans p-2">
-        <h3 class="font-bold text-base">${title}</h3>
-        <p class="text-xs text-gray-600">${dept}</p>
-        <p class="text-xs mt-1">${start} to ${end}</p>
-        <p class="text-xs">₹${(cost / 1000000).toFixed(1)}L</p>
-        <p class="mt-1"><span class="text-xs px-2 py-1 rounded ${
-          risk === 'HIGH' ? 'bg-red-200 text-red-800' :
-          risk === 'MEDIUM' ? 'bg-yellow-200 text-yellow-800' :
-          'bg-green-200 text-green-800'
-        }">${risk}</span></p>
-        ${clash_with ? `<p class="mt-2 text-xs text-red-600 font-semibold">⚠️ CLASH with ${clash_with}</p>` : '<p class="mt-2 text-xs text-green-600">✅ No conflicts</p>'}
+      <div style="font-family:system-ui,sans-serif;padding:4px">
+        <h3 style="font-weight:700;font-size:14px;margin:0">${title}</h3>
+        <p style="font-size:11px;color:#9ca3af;margin:2px 0">${dept}</p>
+        <p style="font-size:11px;margin:2px 0">${start} to ${end}</p>
+        <p style="font-size:11px;margin:2px 0">Cost: ₹${(cost / 1000000).toFixed(1)}L</p>
+        <span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;${riskBg}">${risk}</span>
+        ${clashHtml}
       </div>
     `;
-    
+
     layer.bindPopup(popupContent);
   };
 
   const style = (feature: any): any => {
     const dept = feature.properties.dept;
     const isVisible = visibleDepts.has(dept);
-    
+
     return {
       color: deptColors[dept] || '#666',
       weight: 4,
@@ -78,67 +81,68 @@ export default function MapComponent() {
     setVisibleDepts(newSet);
   };
 
-  // Calculate clash summary
   const clashCount = (mockProjects as any).features.filter(
     (f: any) => f.properties.clash_with !== null
   ).length;
-  
+
   const totalWaste = (mockProjects as any).features
     .filter((f: any) => f.properties.clash_with !== null)
     .reduce((sum: number, f: any) => sum + (f.properties.cost * 0.2), 0);
 
   return (
-    <div className="w-full h-screen flex bg-gradient-to-br from-slate-900 via-slate-900 to-blue-900">
-      {/* Left Panel - Project List */}
-      <div className="w-80 bg-black/40 backdrop-blur-xl border-r border-white/10 overflow-y-auto hidden lg:flex flex-col">
-        <div className="p-6 border-b border-white/10">
-          <h2 className="text-xl font-bold text-white mb-4">Active Projects</h2>
-          <div className="space-y-2">
+    <div className="flex h-screen w-full bg-background">
+      {/* Left Panel */}
+      <aside className="hidden w-80 flex-col overflow-y-auto border-r border-border bg-card lg:flex">
+        <div className="border-b border-border p-6">
+          <h2 className="text-lg font-semibold">Active Projects</h2>
+          <div className="mt-4 space-y-2">
             {Object.entries(deptColors).map(([dept, color]) => (
-              <label key={dept} className="flex items-center space-x-3 cursor-pointer group">
+              <label key={dept} className="flex cursor-pointer items-center gap-3 group">
                 <input
                   type="checkbox"
                   checked={visibleDepts.has(dept)}
                   onChange={() => handleDeptToggle(dept)}
-                  className="w-4 h-4 rounded"
+                  className="h-4 w-4 rounded border-border"
                 />
-                <div
-                  className="w-4 h-1 rounded-full"
+                <span
+                  className="h-1 w-4 rounded-full"
                   style={{ backgroundColor: color }}
-                ></div>
-                <span className="text-sm text-gray-200 group-hover:text-white transition">
+                  aria-hidden="true"
+                />
+                <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
                   {dept}
                 </span>
               </label>
             ))}
           </div>
         </div>
-        
-        <div className="flex-1 p-6 space-y-4">
+
+        <div className="flex-1 space-y-3 p-6">
           {(mockProjects as any).features
             .filter((f: any) => visibleDepts.has(f.properties.dept))
             .map((feature: any) => (
               <div
                 key={feature.properties.id}
-                className="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition"
+                className="rounded-lg border border-border bg-muted/40 p-3 hover:bg-muted/60 transition-colors"
               >
-                <p className="font-semibold text-sm text-white">{feature.properties.title}</p>
-                <div className="mt-2 space-y-1 text-xs text-gray-300">
-                  <p className="flex items-center space-x-2">
+                <p className="text-sm font-medium">{feature.properties.title}</p>
+                <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                  <p className="flex items-center gap-2">
                     <span
-                      className="w-3 h-1 rounded-full"
+                      className="h-1 w-3 rounded-full"
                       style={{ backgroundColor: deptColors[feature.properties.dept] }}
-                    ></span>
+                      aria-hidden="true"
+                    />
                     <span>{feature.properties.dept}</span>
                   </p>
                   <p>₹{(feature.properties.cost / 1000000).toFixed(1)}L</p>
                   <span
-                    className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
+                    className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${
                       feature.properties.risk === 'HIGH'
-                        ? 'bg-red-500/20 text-red-300'
+                        ? 'bg-destructive/20 text-red-400'
                         : feature.properties.risk === 'MEDIUM'
-                        ? 'bg-yellow-500/20 text-yellow-300'
-                        : 'bg-green-500/20 text-green-300'
+                        ? 'bg-yellow-500/20 text-yellow-400'
+                        : 'bg-emerald-500/20 text-emerald-400'
                     }`}
                   >
                     {feature.properties.risk}
@@ -147,10 +151,10 @@ export default function MapComponent() {
               </div>
             ))}
         </div>
-      </div>
+      </aside>
 
-      {/* Map Container */}
-      <div className="flex-1 relative">
+      {/* Map */}
+      <div className="relative flex-1">
         <MapContainer
           center={[26.2298, 78.1734]}
           zoom={13}
@@ -158,7 +162,7 @@ export default function MapComponent() {
           maxZoom={17}
           maxBounds={[[26.18, 78.1], [26.28, 78.24]]}
           maxBoundsViscosity={1.0}
-          className="w-full h-full"
+          className="h-full w-full"
           style={{ background: '#0f172a' }}
         >
           <TileLayer
@@ -166,7 +170,6 @@ export default function MapComponent() {
             attribution='&copy; OpenStreetMap contributors'
           />
 
-          {/* Gwalior Boundary Overlay */}
           <LayerGroup>
             <Circle
               center={[26.2298, 78.1734]}
@@ -181,7 +184,6 @@ export default function MapComponent() {
             />
           </LayerGroup>
 
-          {/* Project Layers */}
           {filteredFeatures.map((feature: any, idx: number) => (
             <LayerGroup key={idx}>
               <GeoJSON
@@ -189,8 +191,6 @@ export default function MapComponent() {
                 style={style}
                 onEachFeature={onEachFeature}
               />
-              
-              {/* High Risk Pulsing Circle */}
               {feature.properties.risk === 'HIGH' && (
                 <Circle
                   center={[
@@ -210,42 +210,33 @@ export default function MapComponent() {
           ))}
         </MapContainer>
 
-        {/* Right Panel - Clash Summary */}
-        <div className="absolute top-6 right-6 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 w-80 shadow-2xl">
-          <h3 className="text-lg font-bold text-white mb-4">Conflict Summary</h3>
-          
-          <div className="space-y-4">
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
-              <p className="text-sm text-gray-300">Active Clashes</p>
-              <p className="text-2xl font-bold text-red-400">{clashCount}</p>
+        {/* Clash Summary Panel */}
+        <div className="absolute right-6 top-6 w-72 rounded-xl border border-border bg-card/90 p-5 shadow-xl backdrop-blur-lg">
+          <h3 className="text-sm font-semibold">Conflict Summary</h3>
+
+          <div className="mt-4 space-y-3">
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+              <p className="text-xs text-muted-foreground">Active Clashes</p>
+              <p className="text-xl font-bold text-red-400">{clashCount}</p>
             </div>
 
-            <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
-              <p className="text-sm text-gray-300">Total Waste Risk</p>
-              <p className="text-2xl font-bold text-orange-400">
+            <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 p-3">
+              <p className="text-xs text-muted-foreground">Total Waste Risk</p>
+              <p className="text-xl font-bold text-orange-400">
                 ₹{(totalWaste / 10000000).toFixed(1)}Cr
               </p>
             </div>
 
             <button
               onClick={() => {
-                const report = `
-Karana Platform - Conflict Report
-Date: ${new Date().toLocaleDateString()}
+                const report = `Karana Platform - Conflict Report\nDate: ${new Date().toLocaleDateString()}\n\nActive Clashes: ${clashCount}\nTotal Financial Risk: ₹${(totalWaste / 10000000).toFixed(1)} Crore\n\nClashing Projects:\n${(mockProjects as any).features
+                  .filter((f: any) => f.properties.clash_with !== null)
+                  .map(
+                    (f: any) =>
+                      `- ${f.properties.dept}: ${f.properties.title} (₹${(f.properties.cost / 1000000).toFixed(1)}L)`
+                  )
+                  .join('\n')}`;
 
-Active Clashes: ${clashCount}
-Total Financial Risk: ₹${(totalWaste / 10000000).toFixed(1)} Crore
-
-Clashing Projects:
-${(mockProjects as any).features
-  .filter((f: any) => f.properties.clash_with !== null)
-  .map(
-    (f: any) =>
-      `- ${f.properties.dept}: ${f.properties.title} (₹${(f.properties.cost / 1000000).toFixed(1)}L)`
-  )
-  .join('\n')}
-                `;
-                
                 const blob = new Blob([report], { type: 'text/plain' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -253,9 +244,9 @@ ${(mockProjects as any).features
                 a.download = 'karana-conflict-report.txt';
                 a.click();
               }}
-              className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-2 rounded-lg transition text-sm"
+              className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
-              📄 Export Report
+              Export Report
             </button>
           </div>
         </div>

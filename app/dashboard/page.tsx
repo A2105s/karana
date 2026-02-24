@@ -3,6 +3,18 @@
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import mockProjects from '@/data/mockProjects.json';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { FolderKanban, AlertTriangle, IndianRupee, TrendingDown, GitMerge } from 'lucide-react';
 
 export default function DashboardPage() {
   const projects = (mockProjects as any).features;
@@ -10,75 +22,96 @@ export default function DashboardPage() {
   const totalCost = projects.reduce((sum: number, p: any) => sum + p.properties.cost, 0);
   const wasteRisk = clashingProjects.reduce((sum: number, p: any) => sum + (p.properties.cost * 0.2), 0);
 
+  const stats = [
+    { label: 'Total Projects', value: projects.length, icon: FolderKanban, accent: 'text-primary' },
+    { label: 'Active Clashes', value: clashingProjects.length, icon: AlertTriangle, accent: 'text-destructive' },
+    { label: 'Total Investment', value: `₹${(totalCost / 10000000).toFixed(1)}Cr`, icon: IndianRupee, accent: 'text-emerald-400' },
+    { label: 'Waste at Risk', value: `₹${(wasteRisk / 10000000).toFixed(1)}Cr`, icon: TrendingDown, accent: 'text-orange-400' },
+  ];
+
+  const riskVariant = (risk: string) => {
+    if (risk === 'HIGH') return 'destructive' as const;
+    if (risk === 'MEDIUM') return 'secondary' as const;
+    return 'outline' as const;
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-blue-900">
+    <div className="flex min-h-screen flex-col">
       <Navbar />
-      
-      <div className="flex">
+
+      <div className="flex flex-1">
         <Sidebar />
-        
-        <main className="flex-1 p-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            {[
-              { label: 'Total Projects', value: projects.length, icon: '📦', color: 'from-blue-600 to-blue-700' },
-              { label: 'Active Clashes', value: clashingProjects.length, icon: '⚠️', color: 'from-red-600 to-red-700' },
-              { label: 'Total Investment', value: `₹${(totalCost / 10000000).toFixed(1)}Cr`, icon: '💰', color: 'from-green-600 to-green-700' },
-              { label: 'Waste at Risk', value: `₹${(wasteRisk / 10000000).toFixed(1)}Cr`, icon: '🔴', color: 'from-orange-600 to-orange-700' },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className={`bg-gradient-to-br ${stat.color} rounded-2xl p-6 text-white shadow-lg`}
-              >
-                <div className="text-3xl mb-2">{stat.icon}</div>
-                <p className="text-sm text-gray-100 opacity-80">{stat.label}</p>
-                <p className="text-3xl font-bold mt-2">{stat.value}</p>
-              </div>
-            ))}
+
+        <main className="flex-1 p-6 lg:p-8 space-y-6 overflow-auto">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+            <p className="text-sm text-muted-foreground mt-1">Commissioner overview of active infrastructure projects</p>
           </div>
 
-          {/* Clashes Table */}
-          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-            <h2 className="text-2xl font-bold text-white mb-6">Active Clashes</h2>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left py-3 px-4 text-gray-300">Project 1</th>
-                    <th className="text-left py-3 px-4 text-gray-300">Dept</th>
-                    <th className="text-left py-3 px-4 text-gray-300">Clashing With</th>
-                    <th className="text-left py-3 px-4 text-gray-300">Combined Cost</th>
-                    <th className="text-left py-3 px-4 text-gray-300">Risk</th>
-                    <th className="text-left py-3 px-4 text-gray-300">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {clashingProjects.map((project: any) => (
-                    <tr key={project.properties.id} className="border-b border-white/10 hover:bg-white/5 transition">
-                      <td className="py-4 px-4 text-white font-medium">{project.properties.title}</td>
-                      <td className="py-4 px-4 text-gray-300">{project.properties.dept}</td>
-                      <td className="py-4 px-4 text-gray-300">{project.properties.clash_with}</td>
-                      <td className="py-4 px-4 text-gray-300">₹{(project.properties.cost / 1000000).toFixed(1)}L</td>
-                      <td className="py-4 px-4">
-                        <span className={`px-3 py-1 rounded text-xs font-semibold ${
-                          project.properties.risk === 'HIGH' ? 'bg-red-500/20 text-red-300' :
-                          project.properties.risk === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-300' :
-                          'bg-green-500/20 text-green-300'
-                        }`}>
-                          {project.properties.risk}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4">
-                        <button className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold transition">
-                          Merge Tender
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {/* Stat cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {stats.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <Card key={stat.label} className="bg-card border-border">
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-medium text-muted-foreground">{stat.label}</p>
+                      <Icon className={`h-4 w-4 ${stat.accent}`} aria-hidden="true" />
+                    </div>
+                    <p className="text-2xl font-semibold mt-2">{stat.value}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
+
+          {/* Clashes table */}
+          <Card className="bg-card border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-destructive" aria-hidden="true" />
+                Active Clashes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead>Project</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead>Clashing With</TableHead>
+                    <TableHead className="text-right">Cost</TableHead>
+                    <TableHead>Risk</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {clashingProjects.map((project: any) => (
+                    <TableRow key={project.properties.id} className="border-border">
+                      <TableCell className="font-medium">{project.properties.title}</TableCell>
+                      <TableCell className="text-muted-foreground">{project.properties.dept}</TableCell>
+                      <TableCell className="text-muted-foreground">{project.properties.clash_with}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        ₹{(project.properties.cost / 1000000).toFixed(1)}L
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={riskVariant(project.properties.risk)}>
+                          {project.properties.risk}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
+                          <GitMerge className="h-3 w-3" aria-hidden="true" />
+                          Merge Tender
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </main>
       </div>
     </div>
