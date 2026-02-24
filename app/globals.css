@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "tailwindcss/theme";
 
+/* Leaflet draw toolbar icons */
+@import "leaflet-draw/dist/leaflet.draw.css";
+
 * {
   margin: 0;
   padding: 0;
